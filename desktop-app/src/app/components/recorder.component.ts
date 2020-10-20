@@ -9,16 +9,11 @@ import { ICapturable, ICapturer, RecordingService } from '../services/recording.
     <button (click)="select()">Select App</button>
     <button (click)="capture()" [disabled]="!canCapture()">Record</button>
     <button (click)="pause()" [disabled]="!canPause()">Pause</button>
-    <div class="video"><app-player [source]="preview"></app-player></div>
+    <div class="video">
+      <app-player [source]="preview" [capturer]="capturer"></app-player>
+    </div>
   </div>`,
-  styles: [
-    `
-      .video {
-        max-width: 500px;
-        max-height: 500px;
-      }
-    `,
-  ],
+  styles: [``],
 })
 export class RecorderComponent {
   public capturer?: ICapturer;
@@ -50,9 +45,9 @@ export class RecorderComponent {
     return this.capturer && this.capturer.isRecording();
   }
 
-  public pause() {
+  public async pause() {
     if (this.capturer) {
-      this.capturer.pause();
+      await this.capturer.pause();
       this.preview = this.capturer.getBlob();
     }
   }
@@ -60,6 +55,7 @@ export class RecorderComponent {
   private async useCapturable(capturable: ICapturable) {
     const capturer = await this.recorder.record(true, capturable);
     this.capturer = capturer;
+    this.preview = this.capturer.getStream();
   }
 }
 

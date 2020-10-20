@@ -17,6 +17,7 @@ import { StorageService } from './services/StorageService';
 import { RecordingService } from './services/recording.service';
 import { RecorderComponent, ScreenPickerDialog } from './components/recorder.component';
 import { PlayerComponent } from './components/player.component';
+import { VideoSizerComponent } from './components/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
 import { ElectronService } from './services/electron.service';
 
@@ -32,7 +33,14 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
 }
 
 @NgModule({
-  declarations: [AppComponent, PlayerComponent, RecorderComponent, ScreenPickerComponent, ScreenPickerDialog],
+  declarations: [
+    AppComponent,
+    PlayerComponent,
+    RecorderComponent,
+    ScreenPickerComponent,
+    ScreenPickerDialog,
+    VideoSizerComponent,
+  ],
   imports: [
     BrowserAnimationsModule,
     BrowserModule,

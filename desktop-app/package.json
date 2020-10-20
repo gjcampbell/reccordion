@@ -68,7 +68,6 @@
     "@types/jasmine": "3.5.14",
     "@types/jasminewd2": "2.0.8",
     "@types/dom-mediacapture-record": "1.0.7",
-    "@types/mocha": "8.0.3",
     "@types/node": "12.12.6",
     "@typescript-eslint/eslint-plugin": "4.2.0",
     "@typescript-eslint/eslint-plugin-tslint": "4.2.0",

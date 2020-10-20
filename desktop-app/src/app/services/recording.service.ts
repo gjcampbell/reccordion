@@ -27,7 +27,7 @@ export interface ICapturer {
   getStream: () => MediaStream;
   getBlob: () => Blob;
   getDuration: () => number;
-  pause: () => void;
+  pause: () => Promise<void>;
   capture: () => void;
   isRecording: () => boolean;
 }
@@ -71,31 +71,33 @@ export class RecordingService {
   }
 
   private createCapturer(videoRecorder: MediaRecorder) {
-    let duration = 0;
-    const buffer: Blob[] = [],
+    let duration = 0,
+      startTime: number = 0;
+    const chunks: Blob[] = [],
       result: ICapturer = {
         getStream: () => videoRecorder.stream,
         isRecording: () => videoRecorder.state === 'recording',
-        getBlob: () => new Blob(buffer, { type: 'video/webm' }),
-        getDuration: () => duration,
-        pause: () => {
-          if (videoRecorder.state === 'recording') {
+        getBlob: () => new Blob(chunks, { type: 'video/webm' }),
+        getDuration: () => duration + (videoRecorder.state === 'recording' ? Date.now() - startTime : 0),
+        pause: () =>
+          new Promise((resolve) => {
+            duration += Date.now() - startTime;
+            videoRecorder.ondataavailable = (e) => {
+              chunks.push(e.data);
+              resolve();
+            };
+            videoRecorder.requestData();
             videoRecorder.pause();
-          }
-        },
+          }),
         capture: () => {
           if (videoRecorder.state === 'paused') {
             videoRecorder.resume();
           } else {
             videoRecorder.start();
           }
+          startTime = Date.now();
         },
       };
-
-    videoRecorder.ondataavailable = (e) => {
-      buffer.push(e.data);
-      duration = e.timecode;
-    };
 
     return result;
   }
