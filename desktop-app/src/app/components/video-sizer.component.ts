@@ -27,7 +27,9 @@ import { AfterViewInit, Component, EventEmitter, HostBinding, Input, Output } fr
       }
       .content {
         position: relative;
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background: #000;
         box-shadow: 0 0 8px #000;
       }

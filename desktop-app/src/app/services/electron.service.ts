@@ -5,6 +5,7 @@ import { Injectable } from '@angular/core';
 import { ipcRenderer, webFrame, remote, desktopCapturer } from 'electron';
 import * as childProcess from 'child_process';
 import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +16,7 @@ export class ElectronService {
   remote: typeof remote;
   childProcess: typeof childProcess;
   fs: typeof fs;
+  path: typeof path;
   desktopCapturer: typeof desktopCapturer;
 
   get isElectron(): boolean {
@@ -31,8 +33,24 @@ export class ElectronService {
       // If you wan to use remote object, pleanse set enableRemoteModule to true in main.ts
       // this.remote = window.require('electron').remote;
 
+      this.path = window.require('path');
       this.childProcess = window.require('child_process');
       this.fs = window.require('fs');
     }
+  }
+
+  public async saveBlob(blob: Blob, path: string) {
+    return new Promise((resolver) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        console.log(reader);
+        if (reader.readyState === 2) {
+          const buffer = Buffer.from(reader.result as ArrayBuffer);
+          this.fs.writeFileSync(path, buffer);
+          resolver();
+        }
+      };
+      reader.readAsArrayBuffer(blob);
+    });
   }
 }

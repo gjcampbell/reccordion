@@ -1,5 +1,5 @@
 {
-  "productName": "angular-electron",
+  "productName": "reccordion",
   "directories": {
     "output": "release/"
   },
@@ -19,6 +19,7 @@
         "!tsconfig.json",
         "!tslint.json"
     ],
+    "extraResources": ["extraResources/**.*"]
   "win": {
     "icon": "dist/assets/icons",
     "target": [

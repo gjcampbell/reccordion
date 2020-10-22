@@ -15,7 +15,8 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AppComponent } from './app.component';
 import { StorageService } from './services/StorageService';
 import { RecordingService } from './services/recording.service';
-import { RecorderComponent, ScreenPickerDialog } from './components/recorder.component';
+import { RendererService } from './services/renderer.service';
+import { ExportDialog, RecorderComponent, ScreenPickerDialog } from './components/recorder.component';
 import { PlayerComponent } from './components/player.component';
 import { VideoSizerComponent } from './components/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
@@ -26,6 +27,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
@@ -35,6 +37,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
 @NgModule({
   declarations: [
     AppComponent,
+    ExportDialog,
     PlayerComponent,
     RecorderComponent,
     ScreenPickerComponent,
@@ -52,6 +55,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     MatProgressSpinnerModule,
     MatSliderModule,
     MatTabsModule,
+    MatTooltipModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -60,7 +64,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
       },
     }),
   ],
-  providers: [StorageService, RecordingService, ElectronService],
+  providers: [StorageService, RecordingService, ElectronService, RendererService],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

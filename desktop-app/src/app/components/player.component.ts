@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, NgZone, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, Output, ViewChild } from '@angular/core';
 import { MatSliderChange } from '@angular/material/slider';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ICapturer } from 'app/services/recording.service';
@@ -7,6 +7,10 @@ import { ICapturer } from 'app/services/recording.service';
   selector: 'app-player',
   template: `
     <app-video-sizer [maxHeight]="2000" [maxWidth]="2000" [(width)]="width" [(height)]="height">
+      <div class="video-message" *ngIf="isLive" (click)="togglePlay()">
+        <p class="mat-headline"><i class="fa fa-circle"></i> Recording {{ isLivePause ? 'Paused' : 'In Progress' }}</p>
+      </div>
+
       <video
         #preview
         (click)="togglePlay()"
@@ -37,6 +41,18 @@ import { ICapturer } from 'app/services/recording.service';
   `,
   styles: [
     `
+      .video-message {
+        position: absolute;
+        padding: 2rem;
+        background: #fffb;
+        border-radius: 10px;
+      }
+      .video-message p {
+        text-align: center;
+      }
+      .video-message i {
+        color: red;
+      }
       video {
         width: 100%;
         height: 100%;
@@ -44,6 +60,7 @@ import { ICapturer } from 'app/services/recording.service';
       mat-slider {
         width: 100%;
         flex: 1 1 100%;
+        transition: none !important;
       }
       .play-bar {
         display: flex;
@@ -67,11 +84,16 @@ export class PlayerComponent implements AfterViewInit {
   @ViewChild('time')
   public timeDisplay: ElementRef<HTMLDivElement>;
 
-  public isLive: boolean = true;
+  public isLive: boolean = false;
+
+  public get isLivePause() {
+    return this.capturer && !this.capturer.isRecording();
+  }
 
   @Input()
   public capturer?: ICapturer;
 
+  @Input()
   @Input()
   public set source(value: MediaStream | Blob) {
     if (this.videoEl && value !== this.currentSource) {
@@ -87,6 +109,9 @@ export class PlayerComponent implements AfterViewInit {
       }
     }
   }
+
+  @Output()
+  public videoClicked = new EventEmitter();
 
   public get videoEl() {
     return this.videoElementRef && this.videoElementRef.nativeElement;
@@ -113,9 +138,9 @@ export class PlayerComponent implements AfterViewInit {
     if (videoEl && timeDisplay) {
       this.zone.runOutsideAngular(() => {
         videoEl.addEventListener('timeupdate', (e) => {
-          const time = videoEl.currentTime,
-            seconds = (time % 60).toFixed(1).padStart(4, '0'),
-            minutes = Math.floor(time / 60);
+          const time = this.isLive ? this.capturer.getDuration() / 1000 : videoEl.currentTime,
+            seconds = !time ? '' : (time % 60).toFixed(0).padStart(2, '0'),
+            minutes = !time ? '' : Math.floor(time / 60);
 
           timeDisplay.innerText = `${minutes}:${seconds}`;
         });
@@ -152,6 +177,7 @@ export class PlayerComponent implements AfterViewInit {
           this.videoEl.pause();
         }
       }
+      this.videoClicked.emit();
     }
   }
   public handleSliderInput(evt: MatSliderChange) {
