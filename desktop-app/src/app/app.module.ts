@@ -6,21 +6,22 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
-import { SharedModule } from './shared/shared.module';
 
 // NG Translate
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
-import { AppComponent } from './app.component';
-import { StorageService } from './services/StorageService';
+import { ConverterService } from './services/converter.service';
+import { ElectronService } from './services/electron.service';
 import { RecordingService } from './services/recording.service';
 import { RendererService } from './services/renderer.service';
+
+import { AppComponent } from './app.component';
 import { ExportDialog, RecorderComponent, ScreenPickerDialog } from './components/recorder.component';
+import { PlayerCanvasComponent } from './components/player-canvas.component';
 import { PlayerComponent } from './components/player.component';
 import { VideoSizerComponent } from './components/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
-import { ElectronService } from './services/electron.service';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -38,6 +39,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
   declarations: [
     AppComponent,
     ExportDialog,
+    PlayerCanvasComponent,
     PlayerComponent,
     RecorderComponent,
     ScreenPickerComponent,
@@ -49,7 +51,6 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     BrowserModule,
     FormsModule,
     HttpClientModule,
-    SharedModule,
     MatButtonModule,
     MatDialogModule,
     MatProgressSpinnerModule,
@@ -64,7 +65,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
       },
     }),
   ],
-  providers: [StorageService, RecordingService, ElectronService, RendererService],
+  providers: [ConverterService, ElectronService, RecordingService, RendererService],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

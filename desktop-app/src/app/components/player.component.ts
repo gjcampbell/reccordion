@@ -2,13 +2,18 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, Outp
 import { MatSliderChange } from '@angular/material/slider';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ICapturer } from 'app/services/recording.service';
+import { IVideoLayer } from 'app/services/renderer.service';
+import { PlayerCanvasComponent } from './player-canvas.component';
 
 @Component({
   selector: 'app-player',
   template: `
     <app-video-sizer [maxHeight]="2000" [maxWidth]="2000" [(width)]="width" [(height)]="height">
-      <div class="video-message" *ngIf="isLive" (click)="togglePlay()">
-        <p class="mat-headline"><i class="fa fa-circle"></i> Recording {{ isLivePause ? 'Paused' : 'In Progress' }}</p>
+      <div class="video-message" *ngIf="isLive && capturer" (click)="togglePlay()">
+        <p class="mat-headline">
+          <i class="fa fa-circle" [class.message-paused]="isLivePause"></i> Recording
+          {{ isLivePause ? 'Paused' : 'In Progress' }}
+        </p>
       </div>
 
       <video
@@ -17,6 +22,13 @@ import { ICapturer } from 'app/services/recording.service';
         (loadedmetadata)="handleMetadataLoaded()"
         (timeupdate)="handleTimeUpdate()"
       ></video>
+      <app-player-canvas
+        #cvs
+        (clicked)="togglePlay()"
+        [height]="height"
+        [width]="width"
+        [layers]="canvasLayers"
+      ></app-player-canvas>
     </app-video-sizer>
     <div class="play-bar">
       <ng-container *ngIf="!isLive">
@@ -46,12 +58,16 @@ import { ICapturer } from 'app/services/recording.service';
         padding: 2rem;
         background: #fffb;
         border-radius: 10px;
+        box-shadow: 0 0 8px #888;
       }
       .video-message p {
         text-align: center;
       }
       .video-message i {
         color: red;
+      }
+      .video-message i.message-paused {
+        color: #0005;
       }
       video {
         width: 100%;
@@ -83,17 +99,21 @@ export class PlayerComponent implements AfterViewInit {
   public videoElementRef: ElementRef<HTMLVideoElement>;
   @ViewChild('time')
   public timeDisplay: ElementRef<HTMLDivElement>;
+  @ViewChild('cvs')
+  public playerCanvas: PlayerCanvasComponent;
 
-  public isLive: boolean = false;
+  public isLive: boolean = true;
 
   public get isLivePause() {
     return this.capturer && !this.capturer.isRecording();
   }
 
   @Input()
-  public capturer?: ICapturer;
+  public canvasLayers: IVideoLayer[];
 
   @Input()
+  public capturer?: ICapturer;
+
   @Input()
   public set source(value: MediaStream | Blob) {
     if (this.videoEl && value !== this.currentSource) {
@@ -138,26 +158,28 @@ export class PlayerComponent implements AfterViewInit {
     if (videoEl && timeDisplay) {
       this.zone.runOutsideAngular(() => {
         videoEl.addEventListener('timeupdate', (e) => {
-          const time = this.isLive ? this.capturer.getDuration() / 1000 : videoEl.currentTime,
-            seconds = !time ? '' : (time % 60).toFixed(0).padStart(2, '0'),
-            minutes = !time ? '' : Math.floor(time / 60);
-
-          timeDisplay.innerText = `${minutes}:${seconds}`;
+          const time = this.isLive ? this.capturer.getDuration() / 1000 : videoEl.currentTime;
+          timeDisplay.innerText = this.formatTime(time);
         });
       });
     }
   }
 
-  public getTimeLabel() {
-    const minutes = Math.min(this._currentTime / 60),
-      seconds = (this.currentTime % 60).toFixed(1);
+  private formatTime(time: number, mills: number = 0) {
+    const seconds = (time % 60).toFixed(mills).padStart(mills > 0 ? mills + 3 : 2, '0'),
+      minutes = Math.floor(time / 60);
 
     return `${minutes}:${seconds}`;
+  }
+
+  public getTimeLabel(mills: number = 0) {
+    return this.formatTime(this._currentTime);
   }
 
   public handleTimeUpdate() {
     if (this.videoEl) {
       this._currentTime = this.videoEl.currentTime;
+      this.playerCanvas.setTime(this.videoEl.currentTime * 1000);
     }
   }
   public handleMetadataLoaded() {
@@ -176,8 +198,9 @@ export class PlayerComponent implements AfterViewInit {
         } else {
           this.videoEl.pause();
         }
+      } else {
+        this.videoClicked.emit();
       }
-      this.videoClicked.emit();
     }
   }
   public handleSliderInput(evt: MatSliderChange) {

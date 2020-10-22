@@ -115,7 +115,9 @@ export class VideoSizerComponent {
           newH = Math.max(this.minHeight, Math.min(this.maxHeight, startH + deltY));
 
         this.width = newW;
+        this.widthChange.emit(newW);
         this.height = newH;
+        this.heightChange.emit(newH);
       },
       onmouseup = () => {
         this.resizing = false;

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { resolve } from 'dns';
 const WebMWriter = (window as any).WebMWriter as typeof IWebMWriter;
 
 declare class IWebMWriter {
@@ -102,6 +103,7 @@ export class CommentLayer implements IVideoLayer {
 
   public async prepare() {
     for (const comment of this.comments) {
+      this.preparedComments = [];
       this.preparedComments.push({
         text: 'None',
         position: { x: 0, y: 0 },
@@ -164,8 +166,8 @@ export class WebmBlobSeriesLayer implements IVideoLayer {
       url = URL.createObjectURL(blob);
 
     return new Promise<HTMLVideoElement>((resolver) => {
-      videoEl.onloadedmetadata = () => {
-        videoEl.onloadedmetadata = undefined;
+      videoEl.onloadeddata = () => {
+        videoEl.onloadeddata = undefined;
         resolver(videoEl);
       };
       videoEl.src = url;
@@ -186,6 +188,9 @@ export class WebmBlobSeriesLayer implements IVideoLayer {
   private async seek(videoEl: HTMLVideoElement, second: number) {
     return new Promise((resolver) => {
       videoEl.onseeked = resolver;
+      if (videoEl.currentTime === second) {
+        resolver();
+      }
       videoEl.currentTime = second;
     });
   }
