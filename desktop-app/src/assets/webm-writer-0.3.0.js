@@ -475,18 +475,23 @@
      *
      * @return {String}
      */
-    function renderAsWebP(canvas, quality) {
-      return new Promise(resolve => {
-        canvas.toBlob((blob) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (reader.readyState === 2) {
-              resolve(reader.result);
+    function renderAsWebP(frame, quality) {
+        return new Promise(resolve => {
+            const handleBlob = (blob) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    if (reader.readyState === 2) {
+                        resolve(reader.result);
+                    }
+                };
+                reader.readAsBinaryString(blob);
+            };
+            if (frame instanceof Blob) {
+                handleBlob(frame);
+            } else {
+                canvas.toBlob(handleBlob, 'image/webp', quality);
             }
-          };
-          reader.readAsBinaryString(blob);
-        }, 'image/webp', quality)
-      });
+        });
     }
 
     /**
@@ -1265,7 +1270,10 @@
 
                 blobBuffer.seek(oldPos);
             }
-
+            this.setDimensions = async function(width, height) {
+                videoWidth = width;
+                videoHeight = height;
+            }
             /**
              * Add a frame to the video.
              *
@@ -1289,8 +1297,12 @@
              */
             this.addFrame = async function(frame, alpha, overrideFrameDuration) {
                 if (!writtenHeader) {
-                    videoWidth = frame.width || 0;
-                    videoHeight = frame.height || 0;
+                    if (!videoWidth) {
+                        videoWidth = frame.width || 0;
+                    }
+                    if (!videoHeight) {
+                        videoHeight = frame.height || 0;
+                    }
 
                     writeHeader();
                 }

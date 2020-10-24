@@ -9,11 +9,14 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import { IVideoLayer } from 'app/services/renderer.service';
+import { CommentLayer, IComment, IVideoLayer } from 'app/services/renderer.service';
 
 @Component({
   selector: 'app-player-canvas',
-  template: `<canvas #cvs [height]="height" [width]="width" (click)="handleClick()"></canvas>`,
+  template: `
+    <canvas #cvs [height]="height" [width]="width" (click)="handleClick()"></canvas>
+    <app-canvas-text-editor [time]="time" [layers]="layers" [ctx]="drawingContext"></app-canvas-text-editor>
+  `,
   styles: [
     `
       :host {
@@ -45,6 +48,14 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
   @Input()
   public width: number;
 
+  public get time() {
+    return this.timeMs;
+  }
+
+  public get drawingContext() {
+    return this.ctx;
+  }
+
   constructor(private readonly zone: NgZone) {}
   public ngOnDestroy(): void {
     this.destroyed = true;
@@ -57,7 +68,7 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
   private start() {
     if (this.cvs.nativeElement) {
       this.ctx = this.cvs.nativeElement.getContext('2d');
-      this.startRenderLoop();
+      this.startCanvas();
     }
   }
 
@@ -69,14 +80,10 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
     this.timeMs = timeMs;
   }
 
-  private startRenderLoop() {
+  private startCanvas() {
     this.zone.runOutsideAngular(() => {
-      let lastTimeMs = -1;
       const redraw = () => {
-        if (this.timeMs !== lastTimeMs) {
-          this.draw();
-          //lastTimeMs = this.timeMs;
-        }
+        this.draw();
         if (!this.destroyed) {
           window.requestAnimationFrame(redraw);
         }
@@ -91,5 +98,42 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
     for (const layer of this.layers) {
       layer.drawFrame(this.timeMs, ctx);
     }
+  }
+}
+
+@Component({
+  selector: 'app-canvas-text-editor',
+  template: `
+    <ng-container *ngFor="let layer of _layers">
+      <div class="comment" *ngFor="let comment of layer.getComments()" [style]="{}"></div>
+    </ng-container>
+  `,
+  styles: [
+    `
+      .comment {
+        position: absolute;
+      }
+    `,
+  ],
+})
+export class CanvasTextEditorComponent {
+  private _time = 0;
+  protected _layers: CommentLayer[];
+
+  @Input()
+  public set time(ms: number) {
+    this._time = ms;
+  }
+
+  @Input()
+  public set layers(layers: IVideoLayer[]) {
+    this._layers = layers.filter((l) => l instanceof CommentLayer) as CommentLayer[];
+  }
+
+  @Input()
+  public ctx: CanvasRenderingContext2D;
+
+  protected getDim(layer: CommentLayer, comment: IComment) {
+    //layer.
   }
 }

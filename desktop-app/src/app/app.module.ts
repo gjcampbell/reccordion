@@ -14,11 +14,11 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ConverterService } from './services/converter.service';
 import { ElectronService } from './services/electron.service';
 import { RecordingService } from './services/recording.service';
-import { RendererService } from './services/renderer.service';
+import { RendererService, ReqRendererService } from './services/renderer.service';
 
 import { AppComponent } from './app.component';
 import { ExportDialog, RecorderComponent, ScreenPickerDialog } from './components/recorder.component';
-import { PlayerCanvasComponent } from './components/player-canvas.component';
+import { CanvasTextEditorComponent, PlayerCanvasComponent } from './components/player-canvas.component';
 import { PlayerComponent } from './components/player.component';
 import { VideoSizerComponent } from './components/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
@@ -38,6 +38,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
 @NgModule({
   declarations: [
     AppComponent,
+    CanvasTextEditorComponent,
     ExportDialog,
     PlayerCanvasComponent,
     PlayerComponent,
@@ -65,7 +66,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
       },
     }),
   ],
-  providers: [ConverterService, ElectronService, RecordingService, RendererService],
+  providers: [ConverterService, ElectronService, RecordingService, ReqRendererService, RendererService],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

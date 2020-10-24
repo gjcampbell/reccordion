@@ -2,7 +2,15 @@ import { AfterViewInit, Component, Inject, ViewChild } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ConverterService } from 'app/services/converter.service';
 import { ElectronService } from 'app/services/electron.service';
-import { CommentLayer, IVideo, IVideoLayer, RendererService, WebmBlobSeriesLayer } from 'app/services/renderer.service';
+import {
+  CommentLayer,
+  IBaseVideoLayer,
+  IVideo,
+  IVideoLayer,
+  RendererService,
+  ReqRendererService,
+  WebmBlobSeriesLayer,
+} from 'app/services/renderer.service';
 import { stringify } from 'querystring';
 import { ICapturable, ICapturer, RecordingService } from '../services/recording.service';
 import { PlayerComponent } from './player.component';
@@ -75,7 +83,7 @@ export class RecorderComponent {
 
   public addText() {
     const startMs = this.player.currentTime * 1000;
-    this.textLayer.comments.push({
+    this.textLayer.addText({
       startMs,
       endMs: startMs + 5000,
       text: 'Some Text',
@@ -84,7 +92,6 @@ export class RecorderComponent {
       font: 'bold 24pt sans-serif',
       fillColor: '#000',
     });
-    this.textLayer.prepare();
   }
 
   public select() {
@@ -221,7 +228,7 @@ export class ExportDialog implements AfterViewInit {
   public canceled = false;
   constructor(
     private readonly dialogRef: MatDialogRef<ExportDialog>,
-    private readonly renderer: RendererService,
+    private readonly renderer: ReqRendererService,
     @Inject(MAT_DIALOG_DATA) private readonly video: IVideo,
     private readonly electron: ElectronService,
     private readonly converter: ConverterService
@@ -233,7 +240,7 @@ export class ExportDialog implements AfterViewInit {
 
   private async export() {
     this.status = 'Rendering';
-    const blob = await this.renderer.render(this.video, undefined, (percent) => {
+    const blob = await this.renderer.render(this.video.layers[0] as IBaseVideoLayer, this.video, (percent) => {
         this.percent = (percent * 100).toFixed(0) + '%';
         return !this.canceled;
       }),
