@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ConverterService } from 'app/services/converter.service';
 import { ElectronService } from 'app/services/electron.service';
@@ -7,52 +7,55 @@ import {
   IBaseVideoLayer,
   IVideo,
   IVideoLayer,
-  RendererService,
   ReqRendererService,
+  Video,
+  VideoTimeRanges,
   WebmBlobSeriesLayer,
 } from 'app/services/renderer.service';
-import { stringify } from 'querystring';
 import { ICapturable, ICapturer, RecordingService } from '../services/recording.service';
 import { PlayerComponent } from './player.component';
 
 @Component({
   selector: 'app-recorder',
-  template: ` <div>
-    <div class="video" *ngIf="!exporting">
-      <div class="main-options">
-        <button *ngIf="canSelect()" mat-icon-button matTooltip="Start recording a Window" (click)="select()">
-          <i class="fa fa-fw fa-tv"></i>
-        </button>
-        <button *ngIf="canCapture()" matTooltip="Resume Recording" mat-icon-button (click)="capturer.capture()">
-          <i class="fa fa-fw fa-play-circle"></i>
-        </button>
-        <button *ngIf="canPause()" matTooltip="Pause Recording" mat-icon-button (click)="capturer.pause()">
-          <i class="fa fa-fw fa-pause"></i>
-        </button>
-        <button *ngIf="canStop()" matTooltip="Stop Recording" mat-icon-button (click)="stop()">
-          <i class="fa fa-fw fa-stop-circle"></i>
-        </button>
-        <button
-          *ngIf="stopped && player.videoEl.paused"
-          [matTooltip]="'Add Text at ' + player.getTimeLabel(2)"
-          mat-icon-button
-          (click)="addText()"
-        >
-          <i class="fa fa-fw fa-font"></i>
-        </button>
-        <button *ngIf="canExport()" matTooltip="Export Recording" mat-icon-button (click)="export()">
-          <i class="fa fa-fw fa-file-export"></i>
-        </button>
+  template: `
+    <div>
+      <div class="video" *ngIf="!exporting">
+        <div class="main-options">
+          <button *ngIf="canSelect()" mat-icon-button matTooltip="Start recording a Window" (click)="select()">
+            <i class="fa fa-fw fa-tv"></i>
+          </button>
+          <button *ngIf="canCapture()" matTooltip="Resume Recording" mat-icon-button (click)="capturer.capture()">
+            <i class="fa fa-fw fa-play-circle"></i>
+          </button>
+          <button *ngIf="canPause()" matTooltip="Pause Recording" mat-icon-button (click)="capturer.pause()">
+            <i class="fa fa-fw fa-pause"></i>
+          </button>
+          <button *ngIf="canStop()" matTooltip="Stop Recording" mat-icon-button (click)="stop()">
+            <i class="fa fa-fw fa-stop-circle"></i>
+          </button>
+          <button
+            *ngIf="stopped && player.videoEl.paused"
+            [matTooltip]="'Add Text at ' + player.getTimeLabel(2)"
+            mat-icon-button
+            (click)="addText()"
+          >
+            <i class="fa fa-fw fa-font"></i>
+          </button>
+          <button *ngIf="canExport()" matTooltip="Export Recording" mat-icon-button (click)="export()">
+            <i class="fa fa-fw fa-file-export"></i>
+          </button>
+        </div>
+        <app-player
+          [source]="preview"
+          (videoClicked)="togglePause()"
+          [capturer]="capturer"
+          [layers]="layers"
+          [video]="videoLayer"
+          #player
+        ></app-player>
       </div>
-      <app-player
-        [source]="preview"
-        (videoClicked)="togglePause()"
-        [capturer]="capturer"
-        [canvasLayers]="canvasLayers"
-        #player
-      ></app-player>
     </div>
-  </div>`,
+  `,
   styles: [
     `
       .main-options {
@@ -62,15 +65,15 @@ import { PlayerComponent } from './player.component';
     `,
   ],
 })
-export class RecorderComponent {
+export class RecorderComponent implements AfterViewInit {
   public capturer?: ICapturer;
   public preview?: Blob | MediaStream;
   @ViewChild('player')
   public player: PlayerComponent;
   public stopped = false;
-  private videoLayer = new WebmBlobSeriesLayer();
+  protected videoLayer = new WebmBlobSeriesLayer();
   private textLayer = new CommentLayer();
-  public canvasLayers: IVideoLayer[] = [];
+  public layers: IVideoLayer[] = [];
   public exporting = false;
 
   constructor(
@@ -78,11 +81,14 @@ export class RecorderComponent {
     private readonly dialog: MatDialog,
     private readonly electron: ElectronService
   ) {
-    this.canvasLayers.push(this.textLayer);
+    this.layers.push(this.videoLayer, this.textLayer);
+    this.videoLayer.setDimensions(720, 480);
   }
 
+  public ngAfterViewInit() {}
+
   public addText() {
-    const startMs = this.player.currentTime * 1000;
+    const startMs = this.videoLayer.ranges.timeMs * 1000;
     this.textLayer.addText({
       startMs,
       endMs: startMs + 5000,
@@ -112,7 +118,7 @@ export class RecorderComponent {
   }
 
   public canExport() {
-    return this.stopped && this.videoLayer.blobs.length > 0;
+    return this.stopped && this.videoLayer.isEmpty();
   }
 
   public async export() {
@@ -169,7 +175,7 @@ export class RecorderComponent {
       const blob = this.capturer.getBlob();
       this.preview = blob;
       this.stopped = true;
-      this.videoLayer.blobs.push(blob);
+      this.videoLayer.ranges.addVideo(blob, this.capturer.getDuration());
     }
   }
 

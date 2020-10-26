@@ -1,14 +1,32 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, Output, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostBinding,
+  Input,
+  NgZone,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import { MatSliderChange } from '@angular/material/slider';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ICapturer } from 'app/services/recording.service';
-import { IVideoLayer } from 'app/services/renderer.service';
+import { IBaseVideoLayer, IVideoLayer } from 'app/services/renderer.service';
 import { PlayerCanvasComponent } from './player-canvas.component';
 
 @Component({
   selector: 'app-player',
   template: `
-    <app-video-sizer [maxHeight]="2000" [maxWidth]="2000" [(width)]="width" [(height)]="height">
+    <app-video-sizer
+      [maxHeight]="2000"
+      [maxWidth]="2000"
+      [(width)]="width"
+      [(height)]="height"
+      (heightChange)="handleDimChange()"
+      (widthChange)="handleDimChange()"
+      [class.live]="isLive"
+    >
       <div class="video-message" *ngIf="isLive && capturer" (click)="togglePlay()">
         <p class="mat-headline">
           <i class="fa fa-circle" [class.message-paused]="isLivePause"></i> Recording
@@ -17,6 +35,7 @@ import { PlayerCanvasComponent } from './player-canvas.component';
       </div>
 
       <video
+        class="display-live"
         #preview
         (click)="togglePlay()"
         (loadedmetadata)="handleMetadataLoaded()"
@@ -24,10 +43,12 @@ import { PlayerCanvasComponent } from './player-canvas.component';
       ></video>
       <app-player-canvas
         #cvs
+        class="display-preview"
         (clicked)="togglePlay()"
         [height]="height"
         [width]="width"
-        [layers]="canvasLayers"
+        [layers]="layers"
+        [video]="video"
       ></app-player-canvas>
     </app-video-sizer>
     <div class="play-bar">
@@ -35,14 +56,6 @@ import { PlayerCanvasComponent } from './player-canvas.component';
         <button mat-icon-button class="play" color="accent" (click)="togglePlay()">
           <i class="fa fa-fw" [class.fa-play]="videoEl.paused" [class.fa-pause]="!videoEl.paused"></i>
         </button>
-        <mat-slider
-          [(ngModel)]="currentTime"
-          [min]="0"
-          [max]="capturer?.getDuration() / 1000"
-          [step]="0.025"
-          (input)="handleSliderInput($event)"
-          [tickInterval]="0.025"
-        ></mat-slider>
       </ng-container>
 
       <ng-container *ngIf="!isLive">
@@ -53,6 +66,18 @@ import { PlayerCanvasComponent } from './player-canvas.component';
   `,
   styles: [
     `
+      .display-preview {
+        display: unset;
+      }
+      .display-live {
+        display: none;
+      }
+      .live .display-preview {
+        display: none;
+      }
+      .live .display-live {
+        display: block;
+      }
       .video-message {
         position: absolute;
         padding: 2rem;
@@ -95,10 +120,10 @@ export class PlayerComponent implements AfterViewInit {
   public width = 720;
   public height = 480;
 
-  @ViewChild('preview', { static: true })
-  public videoElementRef: ElementRef<HTMLVideoElement>;
   @ViewChild('time')
   public timeDisplay: ElementRef<HTMLDivElement>;
+  @ViewChild('preview')
+  public videoElementRef: ElementRef<HTMLVideoElement>;
   @ViewChild('cvs')
   public playerCanvas: PlayerCanvasComponent;
 
@@ -109,10 +134,13 @@ export class PlayerComponent implements AfterViewInit {
   }
 
   @Input()
-  public canvasLayers: IVideoLayer[];
+  public layers: IVideoLayer[];
 
   @Input()
   public capturer?: ICapturer;
+
+  @Input()
+  public video: IBaseVideoLayer;
 
   @Input()
   public set source(value: MediaStream | Blob) {
@@ -124,8 +152,6 @@ export class PlayerComponent implements AfterViewInit {
       } else {
         this.isLive = false;
         this.videoEl.srcObject = undefined;
-        const url = this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(value)) as any;
-        this.videoEl.src = url.changingThisBreaksApplicationSecurity;
       }
     }
   }
@@ -137,16 +163,7 @@ export class PlayerComponent implements AfterViewInit {
     return this.videoElementRef && this.videoElementRef.nativeElement;
   }
 
-  public set currentTime(value: number) {
-    if (this.videoEl) {
-      this.videoEl.currentTime = value;
-    }
-  }
-  public get currentTime() {
-    return this._currentTime;
-  }
-
-  public constructor(private readonly sanitizer: DomSanitizer, private readonly zone: NgZone) {}
+  public constructor(private readonly zone: NgZone) {}
 
   public ngAfterViewInit() {
     this.watchTime();
@@ -182,6 +199,9 @@ export class PlayerComponent implements AfterViewInit {
       this.playerCanvas.setTime(this.videoEl.currentTime * 1000);
     }
   }
+  public handleDimChange() {
+    this.video.setDimensions(this.width, this.height);
+  }
   public handleMetadataLoaded() {
     if (this.videoEl) {
       this.videoEl.play();
@@ -190,20 +210,14 @@ export class PlayerComponent implements AfterViewInit {
   public async togglePlay() {
     if (this.videoEl) {
       if (!this.isLive) {
-        if (this.videoEl.ended) {
-          this.videoEl.currentTime = 0;
-          this.videoEl.play();
-        } else if (this.videoEl.paused) {
-          await this.videoEl.play();
+        if (this.video.isPlaying()) {
+          await this.video.pause();
         } else {
-          this.videoEl.pause();
+          await this.video.play();
         }
       } else {
         this.videoClicked.emit();
       }
     }
-  }
-  public handleSliderInput(evt: MatSliderChange) {
-    this.currentTime = evt.value;
   }
 }

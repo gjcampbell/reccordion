@@ -12,12 +12,18 @@ declare class IWebMWriter {
 }
 
 export interface IVideoLayer {
-  prepare(width: number, height: number, frameDurationMs: number): Promise<void>;
+  setDimensions(width: number, height: number): void;
   drawFrame(millisecond: number, ctx: CanvasRenderingContext2D): Promise<void>;
 }
 
 export interface IBaseVideoLayer extends IVideoLayer {
-  iterateFrames(handleFrame: (mills) => Promise<boolean>): Promise<boolean>;
+  iterateFrames(handleFrame: (mills) => Promise<boolean>): Promise<void>;
+  isPlaying(): boolean;
+  play(): Promise<void>;
+  pause(): Promise<void>;
+  seek(mills: number): Promise<void>;
+  getDurationMs(): number;
+  onFrameChanged: (mills: number) => void;
 }
 
 export interface IVideo {
@@ -41,13 +47,6 @@ export class BaseRendererService {
 
     return result;
   }
-
-  protected async prepareLayers(video: IVideo, framerate: number) {
-    const { width, height, layers } = video;
-    for (const layer of layers) {
-      await layer.prepare(width, height, framerate);
-    }
-  }
 }
 
 @Injectable()
@@ -60,8 +59,6 @@ export class ReqRendererService extends BaseRendererService {
     const ctx = this.create2dCtx(video),
       frameRate = video.frameRate || 25,
       writer = new WebMWriter({ quality: video.quality || 0.9999, frameRate });
-
-    await this.prepareLayers(video, frameRate);
 
     const frames = await this.getFrames(rootVideo, video, ctx, progress);
 
@@ -88,17 +85,18 @@ export class ReqRendererService extends BaseRendererService {
     ctx: CanvasRenderingContext2D,
     progress: (percent: number, stage: string) => boolean
   ) {
-    const frameBlobs: { blob: Blob; mills: number }[] = [],
-      finished = await rootVideo.iterateFrames(async (mills) => {
-        ctx.fillRect(0, 0, video.width, video.height);
-        for (const layer of video.layers) {
-          layer.drawFrame(mills, ctx);
-        }
-        ctx.canvas.toBlob((blob) => frameBlobs.push({ blob, mills }), 'image/webp', video.quality);
-        return progress(mills / video.durationMs, '');
-      });
+    let canceled = false;
+    const frameBlobs: { blob: Blob; mills: number }[] = [];
+    await rootVideo.iterateFrames(async (mills) => {
+      ctx.fillRect(0, 0, video.width, video.height);
+      for (const layer of video.layers) {
+        layer.drawFrame(mills, ctx);
+      }
+      ctx.canvas.toBlob((blob) => frameBlobs.push({ blob, mills }), 'image/webp', video.quality);
+      return (canceled = progress(mills / video.durationMs, ''));
+    });
 
-    return finished ? frameBlobs : undefined;
+    return !canceled ? frameBlobs : undefined;
   }
 }
 
@@ -110,8 +108,6 @@ export class RendererService extends BaseRendererService {
       duration = video.durationMs,
       writer = new WebMWriter({ quality: video.quality || 0.9999, frameRate }),
       frameProvider = this.getFrameMs(1000 / frameRate, duration);
-
-    await this.prepareLayers(video, frameRate);
 
     await this.writeFrames(video, ctx, writer, frameProvider, progress);
 
@@ -180,7 +176,7 @@ export class CommentLayer implements IVideoLayer {
     });
   }
 
-  public async prepare() {}
+  public async setDimensions() {}
   public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
     for (const comment of this.comments) {
       if (comment.startMs <= millisecond && comment.endMs >= millisecond) {
@@ -209,92 +205,242 @@ export class CommentLayer implements IVideoLayer {
   }
 }
 
-export class WebmBlobSeriesLayer implements IBaseVideoLayer {
-  public blobs: Blob[] = [];
-  private videos: { x: number; y: number; w: number; h: number; el: VideoEl; durMs: number }[] = [];
-  private canSeek = true;
+export interface VideoTimeRange {
+  startMs: number;
+  endMs: number;
+  video: Video;
+}
 
-  public async prepare(width: number, height: number, frameDurationMs: number) {
-    this.videos = [];
-    for (const blob of this.blobs) {
-      const videoEl = await this.createVideoEl(width, height, blob),
-        scale = Math.min(width / videoEl.videoWidth, height / videoEl.videoHeight),
-        w = videoEl.videoWidth * scale,
-        h = videoEl.videoHeight * scale,
-        x = (width - w) / 2,
-        y = (height - h) / 2;
+export interface VideoClip {
+  localStart: number;
+  localEnd: number;
+  globalStart: number;
+  globalEnd: number;
+  video: Video;
+}
 
-      this.videos.push({ x, y, w, h, el: videoEl as VideoEl, durMs: videoEl.duration * 1000 });
-    }
+export class VideoTimeRanges {
+  public ranges: VideoTimeRange[] = [];
+  private calcRanges: VideoClip[] = [];
+  public timeMs = 0;
+  public durationMs = 0;
+  public playing = false;
+
+  public isEmpty() {
+    return this.ranges.length === 0;
   }
 
-  public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
-    const vm = this.getVideoByMs(millisecond);
-    if (vm) {
-      if (!this.canSeek) {
-        await this.seek(vm.video.el, vm.mills / 1000);
+  public getVideo(): Video | undefined {
+    return this.getVideoByTime(this.timeMs)?.video;
+  }
+
+  public async addVideo(blob: Blob, durationMs: number) {
+    const video = await Video.load(blob, durationMs);
+    this.ranges.push({ video, endMs: durationMs, startMs: 0 });
+    this.recalcRanges();
+  }
+
+  public setVideos(videos: VideoTimeRange[]) {
+    this.ranges = videos;
+    this.recalcRanges();
+  }
+
+  public async play(frameHandler: (timeMs: number | undefined) => Promise<boolean>, speed: number = 1) {
+    if (this.timeMs >= this.durationMs) {
+      this.timeMs = 0;
+    }
+    this.playing = true;
+    let videoClip = this.getVideoByTime(this.timeMs),
+      lastMs = 0;
+    const handler = async (timeMs: number | undefined) => {
+      let result = true;
+      if (this.timeMs !== lastMs) {
+        videoClip = this.getVideoByTime(this.timeMs);
+        result = false;
+        lastMs = this.timeMs;
+      } else {
+        const globalTime = videoClip.globalStart + (timeMs === undefined ? videoClip.localEnd : timeMs);
+        if (globalTime >= videoClip.globalEnd) {
+          videoClip = this.getVideoByTime(globalTime);
+          result = false;
+        } else if (!this.playing) {
+          videoClip = undefined;
+          result = false;
+        } else {
+          result = await frameHandler(globalTime);
+        }
+        this.timeMs = lastMs = globalTime;
       }
-      ctx.drawImage(vm.video.el, vm.video.x, vm.video.y, vm.video.w, vm.video.h);
+      return result;
+    };
+    while (videoClip) {
+      await this.seek(this.timeMs);
+      await videoClip.video.iterateFrames(handler, speed);
     }
+    this.playing = false;
   }
 
-  public async iterateFrames(handleFrame: (mills) => Promise<boolean>) {
-    for (const video of this.videos) {
-      do {
-        const mills = await this.nextFrame(video.el);
-        if (mills === undefined) {
-          break;
-        }
-        if (!(await handleFrame(mills))) {
-          return false;
-        }
-      } while (true);
-    }
-    return true;
+  public async pause() {
+    this.playing = false;
   }
 
-  private async nextFrame(videoEl: VideoEl) {
-    if (videoEl.paused) {
-      videoEl.playbackRate = 2;
-      await videoEl.play();
+  public async seek(timeMs: number) {
+    this.timeMs = timeMs;
+    const videoClip = this.getVideoByTime(this.timeMs);
+    await this.seekVideo(this.timeMs, videoClip);
+  }
+
+  private async seekVideo(timeMs: number, clip: VideoClip) {
+    clip.video.seek(this.timeMs - clip.globalStart + clip.localStart);
+  }
+
+  private getVideoByTime(timeMs: number) {
+    return this.calcRanges.filter((r) => r.globalStart <= timeMs && r.globalEnd > timeMs).find(() => true);
+  }
+
+  private recalcRanges() {
+    this.durationMs = this.ranges.reduce((result, item) => result + (item.endMs - item.startMs), 0);
+    this.calcRanges = [];
+    let total = 0;
+    for (const range of this.ranges) {
+      this.calcRanges.push({
+        localStart: range.startMs,
+        localEnd: range.endMs,
+        video: range.video,
+        globalStart: total,
+        globalEnd: total += range.endMs,
+      });
     }
-    return new Promise<number | undefined>((resolve) => {
-      videoEl.onended = () => resolve(undefined);
-      videoEl.requestVideoFrameCallback((time, { mediaTime }) => resolve(mediaTime * 1000));
+  }
+}
+
+export class Video {
+  public w!: number;
+  public h!: number;
+  public videoEl!: VideoEl;
+  public durationMs: number;
+
+  private constructor(private readonly blob: Blob) {}
+
+  public async play() {
+    await this.videoEl.play();
+  }
+  public async pause() {
+    await this.videoEl.pause();
+  }
+  public seek(timeMs: number) {
+    const timeSec = timeMs / 1000;
+    return new Promise((resolve) => {
+      if (this.videoEl.currentTime !== timeSec) {
+        this.videoEl.onseeked = resolve;
+        this.videoEl.currentTime = timeSec;
+      } else {
+        resolve();
+      }
     });
   }
+  public async iterateFrames(frameHandler: (timeMs?: number) => Promise<boolean>, speed: number = 1) {
+    this.videoEl.playbackRate = speed;
+    if (this.videoEl.paused) {
+      await this.play();
+    }
+    while (true) {
+      const timeMs = await this.nextFrame();
+      if (!(await frameHandler(timeMs))) {
+        this.pause();
+        break;
+      }
+    }
+  }
 
-  private createVideoEl(width: number, height: number, blob: Blob) {
-    const videoEl = document.createElement('video'),
-      url = URL.createObjectURL(blob);
+  public static async load(blob: Blob, durationMs: number) {
+    const result = new Video(blob);
+    result.durationMs = durationMs;
+    await result.init();
+    return result;
+  }
 
-    return new Promise<HTMLVideoElement>((resolver) => {
-      videoEl.onloadeddata = () => {
-        videoEl.onloadeddata = undefined;
+  private nextFrame() {
+    return new Promise<number | undefined>(this.nextFrameHandler);
+  }
+
+  private nextFrameHandler = (resolver: (timeMs: number | undefined) => void) => {
+    this.videoEl.onended = () => resolver(undefined);
+    this.videoEl.requestVideoFrameCallback((time, { mediaTime }) => resolver(mediaTime * 1000));
+  };
+
+  private async init() {
+    this.videoEl = await this.createVideoEl();
+    this.w = this.videoEl.videoWidth;
+    this.h = this.videoEl.videoHeight;
+  }
+
+  private async createVideoEl() {
+    const videoEl = document.createElement('video') as VideoEl,
+      url = URL.createObjectURL(this.blob);
+
+    return new Promise<VideoEl>((resolver) => {
+      videoEl.onloadedmetadata = () => {
+        videoEl.onloadedmetadata = undefined;
         resolver(videoEl);
       };
       videoEl.src = url;
     });
   }
+}
 
-  private getVideoByMs(mills: number) {
-    for (const video of this.videos) {
-      if (video.durMs >= mills) {
-        return { mills, video };
-      } else {
-        mills -= video.durMs;
-      }
-    }
-    return undefined;
+export class WebmBlobSeriesLayer implements IBaseVideoLayer {
+  public onFrameChanged: (mills: number) => void;
+  public ranges = new VideoTimeRanges();
+  private height = 0;
+  private width = 0;
+
+  public isEmpty() {
+    return this.ranges.isEmpty();
   }
 
-  private seek(videoEl: HTMLVideoElement, second: number) {
-    return new Promise((resolver) => {
-      videoEl.onseeked = resolver;
-      if (videoEl.currentTime === second) {
-        resolver();
+  public setDimensions(width: number, height: number) {
+    this.height = height;
+    this.width = width;
+  }
+
+  public isPlaying() {
+    return this.ranges.playing;
+  }
+  public async play() {
+    await this.ranges.play(async (time) => {
+      if (this.onFrameChanged) {
+        this.onFrameChanged(time);
       }
-      videoEl.currentTime = second;
-    });
+      return true;
+    }, 1);
+  }
+  public async pause() {
+    await this.ranges.pause();
+  }
+  public async seek(mills: number) {
+    await this.ranges.seek(mills);
+  }
+  public getDurationMs() {
+    return this.ranges.durationMs;
+  }
+
+  public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
+    const vm = this.ranges.getVideo();
+    if (vm) {
+      const scale = Math.min(this.width / vm.w, this.height / vm.h),
+        w = vm.w * scale,
+        h = vm.h * scale,
+        x = (this.width - w) / 2,
+        y = (this.height - h) / 2;
+
+      ctx.drawImage(vm.videoEl, x, y, w, h);
+    }
+  }
+
+  public async iterateFrames(handleFrame: (mills) => Promise<boolean>) {
+    await this.ranges.play(async (time) => {
+      return await handleFrame(time);
+    }, 2);
   }
 }

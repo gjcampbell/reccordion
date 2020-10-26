@@ -9,7 +9,7 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import { CommentLayer, IComment, IVideoLayer } from 'app/services/renderer.service';
+import { CommentLayer, IBaseVideoLayer, IComment, IVideoLayer } from 'app/services/renderer.service';
 
 @Component({
   selector: 'app-player-canvas',
@@ -47,6 +47,9 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
 
   @Input()
   public width: number;
+
+  @Input()
+  public video: IBaseVideoLayer;
 
   public get time() {
     return this.timeMs;
