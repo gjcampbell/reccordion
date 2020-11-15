@@ -28,10 +28,11 @@ import { PlayerCanvasComponent } from './player-canvas.component';
       [class.live]="isLive"
     >
       <div class="video-message" *ngIf="isLive && capturer" (click)="togglePlay()">
-        <p class="mat-headline">
+        <div class="mat-headline">
           <i class="fa fa-circle" [class.message-paused]="isLivePause"></i> Recording
           {{ isLivePause ? 'Paused' : 'In Progress' }}
-        </p>
+          <span>{{ this.liveTime }}</span>
+        </div>
       </div>
 
       <video
@@ -61,7 +62,6 @@ import { PlayerCanvasComponent } from './player-canvas.component';
       <ng-container *ngIf="!isLive">
         <div *ngIf="isLive" class="live-bar"></div>
       </ng-container>
-      <div class="time mat-body" #time></div>
     </div>
   `,
   styles: [
@@ -119,6 +119,7 @@ export class PlayerComponent implements AfterViewInit {
   private currentSource: MediaStream | Blob;
   public width = 720;
   public height = 480;
+  protected liveTime = '';
 
   @ViewChild('time')
   public timeDisplay: ElementRef<HTMLDivElement>;
@@ -149,6 +150,7 @@ export class PlayerComponent implements AfterViewInit {
       if (value instanceof MediaStream) {
         this.isLive = true;
         this.videoEl.srcObject = value;
+        this.watchTime();
       } else {
         this.isLive = false;
         this.videoEl.srcObject = undefined;
@@ -165,21 +167,14 @@ export class PlayerComponent implements AfterViewInit {
 
   public constructor(private readonly zone: NgZone) {}
 
-  public ngAfterViewInit() {
-    this.watchTime();
-  }
+  public ngAfterViewInit() {}
 
   private watchTime() {
-    const videoEl = this.videoElementRef.nativeElement,
-      timeDisplay = this.timeDisplay.nativeElement;
-    if (videoEl && timeDisplay) {
-      this.zone.runOutsideAngular(() => {
-        videoEl.addEventListener('timeupdate', (e) => {
-          const time = this.isLive ? this.capturer.getDuration() / 1000 : videoEl.currentTime;
-          timeDisplay.innerText = this.formatTime(time);
-        });
-      });
-    }
+    this.liveTime = '0:00.0';
+    this.videoEl.addEventListener('timeupdate', () => {
+      const time = this.isLive ? this.capturer.getDuration() / 1000 : this.videoEl.currentTime;
+      this.liveTime = this.formatTime(time, 1);
+    });
   }
 
   private formatTime(time: number, mills: number = 0) {
@@ -190,13 +185,12 @@ export class PlayerComponent implements AfterViewInit {
   }
 
   public getTimeLabel(mills: number = 0) {
-    return this.formatTime(this._currentTime);
+    return this.formatTime(this._currentTime, mills);
   }
 
   public handleTimeUpdate() {
     if (this.videoEl) {
       this._currentTime = this.videoEl.currentTime;
-      this.playerCanvas.setTime(this.videoEl.currentTime * 1000);
     }
   }
   public handleDimChange() {

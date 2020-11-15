@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import canvasTxt from '../canvas-txt';
 const WebMWriter = (window as any).WebMWriter as typeof IWebMWriter;
 type VideoEl = HTMLVideoElement & {
   requestVideoFrameCallback: (callback: (now: number, { mediaTime: number }) => void) => void;
@@ -23,6 +24,7 @@ export interface IBaseVideoLayer extends IVideoLayer {
   pause(): Promise<void>;
   seek(mills: number): Promise<void>;
   getDurationMs(): number;
+  getCurrTimeMs(): number;
   onFrameChanged: (mills: number) => void;
 }
 
@@ -143,14 +145,21 @@ export class RendererService extends BaseRendererService {
 export interface IComment {
   text: string;
   position: { x: number; y: number };
-  maxW: number;
+  width: number;
+  height: number;
+  lineHeight: number;
   align: 'center' | 'left' | 'right';
+  vAlign: 'middle' | 'top' | 'bottom';
   font: string;
+  fontSize: number;
   strokeW: number;
   strokeColor: string;
   fillColor: string;
   startMs: number;
   endMs: number;
+  background: string;
+  borderRadius: number;
+  padding: number;
 }
 
 export class CommentLayer implements IVideoLayer {
@@ -164,14 +173,21 @@ export class CommentLayer implements IVideoLayer {
     this.comments.push({
       text: 'None',
       position: { x: 0, y: 0 },
-      maxW: 300,
+      width: 300,
+      height: 300,
       align: 'left',
-      font: '16pt sans-serif',
+      vAlign: 'middle',
+      font: 'sans-serif',
+      fontSize: 16,
+      lineHeight: (comment.fontSize || 16) * 1.2,
       startMs: 0,
       endMs: 5000,
       strokeColor: '#fff',
       strokeW: 1,
       fillColor: '#000',
+      background: '#fff',
+      borderRadius: 4,
+      padding: 5,
       ...comment,
     });
   }
@@ -180,28 +196,43 @@ export class CommentLayer implements IVideoLayer {
   public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
     for (const comment of this.comments) {
       if (comment.startMs <= millisecond && comment.endMs >= millisecond) {
-        ctx.font = comment.font;
+        ctx.fillStyle = comment.background;
+        ctx.fillRect(comment.position.x, comment.position.y, comment.width, comment.height);
+        canvasTxt.align = comment.align;
+        canvasTxt.vAlign = comment.vAlign;
+        canvasTxt.fontSize = comment.fontSize;
+        canvasTxt.font = comment.font;
+        canvasTxt.lineHeight = comment.lineHeight;
         ctx.fillStyle = comment.fillColor;
-        ctx.strokeStyle = comment.strokeColor;
-        ctx.textBaseline = 'top';
-        if (comment.strokeW) {
-          ctx.lineWidth = comment.strokeW;
-          ctx.strokeText(comment.text, comment.position.x, comment.position.y, comment.maxW);
-        }
-        ctx.fillText(comment.text, comment.position.x, comment.position.y, comment.maxW);
+        canvasTxt.drawText(
+          ctx,
+          comment.text,
+          comment.position.x + comment.padding,
+          comment.position.y + comment.padding,
+          comment.width + comment.padding * 2,
+          comment.height + comment.padding * 2
+        );
       }
     }
   }
 
-  public getBounds(comment: IComment, ctx: CanvasRenderingContext2D, time: number) {
-    ctx.font = comment.font;
-    ctx.fillStyle = comment.fillColor;
-    ctx.strokeStyle = comment.strokeColor;
-    ctx.textBaseline = 'top';
-    if (comment.strokeW) {
-      ctx.lineWidth = comment.strokeW;
+  public getLines(ctx, text, maxWidth) {
+    const words = text.split(' '),
+      lines: string[] = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      let word = words[i],
+        width = ctx.measureText(currentLine + ' ' + word).width;
+      if (width < maxWidth) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
     }
-    const textMetrics = ctx.measureText(comment.text);
+    lines.push(currentLine);
+    return lines;
   }
 }
 
@@ -423,6 +454,9 @@ export class WebmBlobSeriesLayer implements IBaseVideoLayer {
   }
   public getDurationMs() {
     return this.ranges.durationMs;
+  }
+  public getCurrTimeMs() {
+    return this.ranges.timeMs;
   }
 
   public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {

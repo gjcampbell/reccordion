@@ -8,8 +8,6 @@ import {
   IVideo,
   IVideoLayer,
   ReqRendererService,
-  Video,
-  VideoTimeRanges,
   WebmBlobSeriesLayer,
 } from 'app/services/renderer.service';
 import { ICapturable, ICapturer, RecordingService } from '../services/recording.service';
@@ -18,49 +16,63 @@ import { PlayerComponent } from './player.component';
 @Component({
   selector: 'app-recorder',
   template: `
-    <div>
-      <div class="video" *ngIf="!exporting">
-        <div class="main-options">
-          <button *ngIf="canSelect()" mat-icon-button matTooltip="Start recording a Window" (click)="select()">
-            <i class="fa fa-fw fa-tv"></i>
-          </button>
-          <button *ngIf="canCapture()" matTooltip="Resume Recording" mat-icon-button (click)="capturer.capture()">
-            <i class="fa fa-fw fa-play-circle"></i>
-          </button>
-          <button *ngIf="canPause()" matTooltip="Pause Recording" mat-icon-button (click)="capturer.pause()">
-            <i class="fa fa-fw fa-pause"></i>
-          </button>
-          <button *ngIf="canStop()" matTooltip="Stop Recording" mat-icon-button (click)="stop()">
-            <i class="fa fa-fw fa-stop-circle"></i>
-          </button>
-          <button
-            *ngIf="stopped && player.videoEl.paused"
-            [matTooltip]="'Add Text at ' + player.getTimeLabel(2)"
-            mat-icon-button
-            (click)="addText()"
-          >
-            <i class="fa fa-fw fa-font"></i>
-          </button>
-          <button *ngIf="canExport()" matTooltip="Export Recording" mat-icon-button (click)="export()">
-            <i class="fa fa-fw fa-file-export"></i>
-          </button>
-        </div>
-        <app-player
-          [source]="preview"
-          (videoClicked)="togglePause()"
-          [capturer]="capturer"
-          [layers]="layers"
-          [video]="videoLayer"
-          #player
-        ></app-player>
+    <ng-container class="video" *ngIf="!exporting">
+      <div class="main-options">
+        <button *ngIf="canSelect()" mat-icon-button matTooltip="Start recording a Window" (click)="select()">
+          <i class="fa fa-fw fa-tv"></i>
+        </button>
+        <button *ngIf="canCapture()" matTooltip="Resume Recording" mat-icon-button (click)="capturer.capture()">
+          <i class="fa fa-fw fa-play-circle"></i>
+        </button>
+        <button *ngIf="canPause()" matTooltip="Pause Recording" mat-icon-button (click)="capturer.pause()">
+          <i class="fa fa-fw fa-pause"></i>
+        </button>
+        <button *ngIf="canStop()" matTooltip="Stop Recording" mat-icon-button (click)="stop()">
+          <i class="fa fa-fw fa-stop-circle"></i>
+        </button>
+        <button
+          *ngIf="stopped && player.videoEl.paused"
+          [matTooltip]="'Add Text at ' + player.getTimeLabel(2)"
+          mat-icon-button
+          (click)="addText()"
+        >
+          <i class="fa fa-fw fa-font"></i>
+        </button>
+        <button *ngIf="canExport()" matTooltip="Export Recording" mat-icon-button (click)="export()">
+          <i class="fa fa-fw fa-file-export"></i>
+        </button>
       </div>
-    </div>
+      <app-player
+        [source]="preview"
+        (videoClicked)="togglePause()"
+        [capturer]="capturer"
+        [layers]="layers"
+        [video]="videoLayer"
+        #player
+      ></app-player>
+      <app-scrubber *ngIf="stopped" [layers]="layers" [video]="videoLayer"></app-scrubber>
+    </ng-container>
   `,
   styles: [
     `
       .main-options {
         font-size: 2rem;
         text-align: center;
+        flex: 0 0 auto;
+      }
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
+      app-player {
+        display: block;
+        flex: 1 1 100%;
+      }
+      app-scrubber {
+        display: block;
+        flex: 1 1 auto;
       }
     `,
   ],
@@ -88,15 +100,19 @@ export class RecorderComponent implements AfterViewInit {
   public ngAfterViewInit() {}
 
   public addText() {
-    const startMs = this.videoLayer.ranges.timeMs * 1000;
+    const startMs = this.videoLayer.getCurrTimeMs();
     this.textLayer.addText({
       startMs,
       endMs: startMs + 5000,
       text: 'Some Text',
       strokeColor: '#fff',
       strokeW: 2,
-      font: 'bold 24pt sans-serif',
-      fillColor: '#000',
+      font: 'Roboto',
+      align: 'center',
+      fillColor: '#fff',
+      background: '#000',
+      height: 200,
+      width: 300,
     });
   }
 

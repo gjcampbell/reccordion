@@ -22,6 +22,7 @@ import { CanvasTextEditorComponent, PlayerCanvasComponent } from './components/p
 import { PlayerComponent } from './components/player.component';
 import { VideoSizerComponent } from './components/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
+import { ScrubberComponent } from './components/scrubber.component';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -45,6 +46,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     RecorderComponent,
     ScreenPickerComponent,
     ScreenPickerDialog,
+    ScrubberComponent,
     VideoSizerComponent,
   ],
   imports: [
