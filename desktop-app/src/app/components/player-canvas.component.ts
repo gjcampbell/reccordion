@@ -273,6 +273,37 @@ export class ResizerService {
   }
 }
 
+interface IColor {
+  fg: string;
+  bg: string;
+}
+
+const fgDark = '#141518',
+  fgLight = '#ECF0F1',
+  color = (bg: string, fg: string) => ({ bg, fg }),
+  colorOptions = [
+    color('#7F8C8D', fgDark),
+    color('#BDC3C8', fgDark),
+    color('#BF3A22', fgDark),
+    color('#D25600', fgDark),
+    color('#F29E00', fgLight),
+    color('#95A5A6', fgLight),
+    color('#ECF0F1', fgLight),
+    color('#E64D33', fgLight),
+    color('#E58000', fgLight),
+    color('#F0C600', fgLight),
+    color('#2C3D52', fgDark),
+    color('#8D40B4', fgDark),
+    color('#2B7EBF', fgDark),
+    color('#2EAF53', fgDark),
+    color('#1FA083', fgDark),
+    color('#344860', fgLight),
+    color('#9A56BD', fgLight),
+    color('#3796E1', fgLight),
+    color('#36CD62', fgDark),
+    color('#25BC99', fgDark),
+  ] as IColor[];
+
 @Component({
   selector: 'app-canvas-text-editor',
   template: `
