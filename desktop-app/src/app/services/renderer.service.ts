@@ -155,11 +155,18 @@ export interface IComment {
   strokeW: number;
   strokeColor: string;
   fillColor: string;
+  padding: number;
   startMs: number;
   endMs: number;
   background: string;
   borderRadius: number;
-  padding: number;
+  borderColor: string;
+  borderWidth: number;
+  shadowBlur: number;
+  shadowColor: string;
+  shape: string;
+  shapeData: any;
+  points: { x: number; y: number }[];
 }
 
 export class CommentLayer implements IVideoLayer {
@@ -175,7 +182,7 @@ export class CommentLayer implements IVideoLayer {
       position: { x: 0, y: 0 },
       width: 300,
       height: 300,
-      align: 'left',
+      align: 'center',
       vAlign: 'middle',
       font: 'sans-serif',
       fontSize: 16,
@@ -187,7 +194,14 @@ export class CommentLayer implements IVideoLayer {
       fillColor: '#000',
       background: '#fff',
       borderRadius: 4,
+      borderColor: '#0000',
+      borderWidth: 0,
       padding: 5,
+      shadowBlur: 15,
+      shadowColor: '#000',
+      shape: 'rect',
+      shapeData: {},
+      points: [],
       ...comment,
     });
   }
@@ -197,7 +211,12 @@ export class CommentLayer implements IVideoLayer {
     for (const comment of this.comments) {
       if (comment.startMs <= millisecond && comment.endMs >= millisecond) {
         ctx.fillStyle = comment.background;
-        ctx.fillRect(comment.position.x, comment.position.y, comment.width, comment.height);
+        ctx.shadowBlur = comment.shadowBlur;
+        ctx.shadowColor = comment.shadowColor;
+        if (comment.shape in this) {
+          this[comment.shape](comment, ctx);
+        }
+        ctx.shadowBlur = 0;
         canvasTxt.align = comment.align;
         canvasTxt.vAlign = comment.vAlign;
         canvasTxt.fontSize = comment.fontSize;
@@ -213,6 +232,30 @@ export class CommentLayer implements IVideoLayer {
           comment.height - comment.padding * 2
         );
       }
+    }
+  }
+  private rect(comment: IComment, ctx: CanvasRenderingContext2D) {
+    ctx.fillRect(comment.position.x, comment.position.y, comment.width, comment.height);
+    ctx.shadowBlur = 0;
+    if (comment.borderWidth) {
+      ctx.strokeStyle = comment.borderColor;
+      ctx.lineWidth = comment.borderWidth;
+      ctx.strokeRect(comment.position.x, comment.position.y, comment.width, comment.height);
+    }
+  }
+  private circle(comment: IComment, ctx: CanvasRenderingContext2D) {
+    const rx = comment.width / 2,
+      ry = comment.height / 2,
+      x = comment.position.x + rx,
+      y = comment.position.y + ry;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    if (comment.borderWidth) {
+      ctx.strokeStyle = comment.borderColor;
+      ctx.lineWidth = comment.borderWidth;
+      ctx.stroke();
     }
   }
 

@@ -277,6 +277,10 @@ interface IColor {
   fg: string;
   bg: string;
 }
+interface IShape {
+  name: string;
+  icon: string;
+}
 
 const fgDark = '#141518',
   fgLight = '#ECF0F1',
@@ -302,7 +306,15 @@ const fgDark = '#141518',
     color('#BF3A22', fgLight),
     color('#BDC3C8', fgDark),
     color('#7F8C8D', fgDark),
-  ] as IColor[];
+  ] as IColor[],
+  shape = (name: string, icon: string) => ({ name, icon }),
+  shapeOptions = [
+    shape('rect', 'fa-square'),
+    shape('circle', 'fa-circle'),
+    shape('arrow', 'fa-long-arrow-alt-right'),
+    shape('triangle', 'fa-play'),
+    shape('star', 'fa-play'),
+  ] as IShape[];
 
 @Component({
   selector: 'app-canvas-text-editor',
@@ -321,14 +333,47 @@ const fgDark = '#141518',
         ></div>
         <ng-container *ngIf="model.isSelected(comment)">
           <div class="tools tools-top">
-            <button [matMenuTriggerFor]="menu" matTooltip="Select Color">
-              <i class="fa fa-fa fa-square color-picker" [style.color]="comment.background"></i>
+            <button [matMenuTriggerFor]="shapeMenu" matTooltip="Select Shape">
+              <i class="fa fa-fw fa-shapes"></i>
             </button>
-            <mat-menu #menu="matMenu">
-              <div class="colors">
+            <mat-menu #shapeMenu="matMenu">
+              <div class="shapes">
+                <div *ngFor="let shape of shapeOptions" class="shape" (click)="handleShapeClick(comment, shape.name)">
+                  <i [class]="'fa fa-fw ' + shape.icon"></i>
+                </div>
+              </div>
+            </mat-menu>
+            <button [matMenuTriggerFor]="colorMenu" matTooltip="Select Background">
+              <i
+                class="fa fa-fw color-picker"
+                [style.color]="comment.background === '#0000' ? '#000' : comment.background"
+                [class.fa-square]="comment.background !== '#0000'"
+                [class.fa-ban]="comment.background === '#0000'"
+              ></i>
+            </button>
+            <mat-menu #colorMenu="matMenu">
+              <div class="colors bg-colors">
+                <div class="color color-none" (click)="handleBgClick(comment, { bg: '#0000', fg: '#000' })">
+                  No Background
+                </div>
+                <div
+                  class="color"
+                  (click)="handleBgClick(comment, { bg: '#000', fg: '#fff' })"
+                  [style.backgroundColor]="'#000'"
+                  [style.color]="'#fff'"
+                >
+                  text
+                </div>
+                <div
+                  class="color"
+                  (click)="handleBgClick(comment, { bg: '#fff', fg: '#000' })"
+                  [style.backgroundColor]="'#fff'"
+                >
+                  text
+                </div>
                 <div
                   *ngFor="let color of colorOptions"
-                  (click)="handleColorClick(comment, color)"
+                  (click)="handleBgClick(comment, color)"
                   class="color"
                   [style.backgroundColor]="color.bg"
                   [style.color]="color.fg"
@@ -337,6 +382,62 @@ const fgDark = '#141518',
                 </div>
               </div>
             </mat-menu>
+            <button [matMenuTriggerFor]="borderMenu" matTooltip="Select Border">
+              <i
+                class="fa fa-fw color-picker"
+                [class.fa-square]="comment.borderColor !== '#0000'"
+                [class.fa-ban]="comment.borderColor === '#0000'"
+                [style.color]="comment.borderColor === '#0000' ? '#000' : comment.borderColor"
+              ></i>
+            </button>
+            <mat-menu #borderMenu="matMenu">
+              <div class="borders">
+                <div class="border-widths">
+                  <div class="width" (click)="handleBorderWidthClick(comment, 8)">
+                    <div [style.height.px]="8"></div>
+                  </div>
+                  <div class="width" (click)="handleBorderWidthClick(comment, 4)">
+                    <div [style.height.px]="4"></div>
+                  </div>
+                  <div class="width" (click)="handleBorderWidthClick(comment, 2)">
+                    <div [style.height.px]="2"></div>
+                  </div>
+                  <div class="width" (click)="handleBorderWidthClick(comment, 1)">
+                    <div [style.height.px]="1"></div>
+                  </div>
+                  <div class="width" (click)="handleBorderWidthClick(comment, 0.5)">
+                    <div [style.height.px]="0.5"></div>
+                  </div>
+                </div>
+                <div class="colors border-colors">
+                  <div class="color color-none" (click)="handleBorderColorClick(comment, '#0000')">No Border</div>
+                  <div
+                    class="color"
+                    (click)="handleBorderColorClick(comment, '#000')"
+                    [style.backgroundColor]="'#000'"
+                  ></div>
+                  <div
+                    class="color"
+                    (click)="handleBorderColorClick(comment, '#fff')"
+                    [style.backgroundColor]="'#fff'"
+                  ></div>
+                  <div
+                    *ngFor="let color of colorOptions"
+                    (click)="handleBorderColorClick(comment, color.bg)"
+                    class="color"
+                    [style.backgroundColor]="color.bg"
+                    [style.color]="color.fg"
+                  ></div>
+                </div>
+              </div>
+            </mat-menu>
+            <button
+              matTooltip="Shadow"
+              [class.active]="!!comment.shadowBlur"
+              (click)="handleToggleShadowClick(comment)"
+            >
+              <i class="fa fa-fw fa-clone fa-rotate-270"></i>
+            </button>
             <div class="sep"></div>
             <button
               mat
@@ -344,7 +445,7 @@ const fgDark = '#141518',
               [class.active]="comment.align === 'left'"
               matTooltip="Align Left"
             >
-              <i class="fa fa-fa fa-align-left"></i>
+              <i class="fa fa-fw fa-align-left"></i>
             </button>
             <button
               mat
@@ -352,7 +453,7 @@ const fgDark = '#141518',
               [class.active]="comment.align === 'center'"
               matTooltip="Align Center"
             >
-              <i class="fa fa-fa fa-align-center"></i>
+              <i class="fa fa-fw fa-align-center"></i>
             </button>
             <button
               mat
@@ -360,7 +461,7 @@ const fgDark = '#141518',
               [class.active]="comment.align === 'right'"
               matTooltip="Align Right"
             >
-              <i class="fa fa-fa fa-align-right"></i>
+              <i class="fa fa-fw fa-align-right"></i>
             </button>
             <div class="sep"></div>
             <button
@@ -369,7 +470,7 @@ const fgDark = '#141518',
               [class.active]="comment.vAlign === 'top'"
               matTooltip="Align Top"
             >
-              <i class="fa fa-fa fa-grip-lines top"></i>
+              <i class="fa fa-fw fa-grip-lines top"></i>
             </button>
             <button
               mat
@@ -377,7 +478,7 @@ const fgDark = '#141518',
               [class.active]="comment.vAlign === 'middle'"
               matTooltip="Align Middle"
             >
-              <i class="fa fa-fa fa-grip-lines middle"></i>
+              <i class="fa fa-fw fa-grip-lines middle"></i>
             </button>
             <button
               mat
@@ -385,7 +486,7 @@ const fgDark = '#141518',
               [class.active]="comment.vAlign === 'bottom'"
               matTooltip="Align Bottom"
             >
-              <i class="fa fa-fa fa-grip-lines bottom"></i>
+              <i class="fa fa-fw fa-grip-lines bottom"></i>
             </button>
           </div>
           <div
@@ -402,22 +503,71 @@ const fgDark = '#141518',
   `,
   styles: [
     `
+      .shapes {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+      }
+      .shape {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: solid 2px #0000;
+      }
+      .shape:hover {
+        border-color: #000;
+      }
+      .shape i {
+        font-size: 1.3rem;
+      }
+      .borders {
+        display: flex;
+      }
+      .border-widths {
+        display: grid;
+        width: 45px;
+        grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+      }
+      .border-widths .width {
+        cursor: pointer;
+        box-sizing: border-box;
+        border: solid 2px #0000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .border-widths .width div {
+        background: #000;
+        width: 27px;
+      }
+      .border-widths .width:hover {
+        border-color: #000;
+      }
+      .color-picker {
+        border: solid 1px #0008;
+      }
       .colors {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-        grid-template-rows: 1fr 1fr 1fr 1fr;
-        height: 160px;
-        width: 200px;
+        width: 225px;
       }
       .color {
         width: 100%;
         height: 100%;
         text-align: center;
-        line-height: 40px;
+        height: 25px;
         vertical-align: middle;
         cursor: pointer;
         box-sizing: border-box;
         border: solid 2px #0000;
+      }
+      .border-colors {
+      }
+      .color-none {
+        grid-column-start: 1;
+        grid-column-end: 4;
       }
       .color:hover {
         border: solid 2px #000;
@@ -433,6 +583,39 @@ const fgDark = '#141518',
       .fa-grip-lines.bottom {
         line-height: 0;
         vertical-align: bottom;
+      }
+      .tools {
+        border-radius: 3px;
+        position: absolute;
+        background: #fffd;
+        border: solid 1px #0003;
+        display: flex;
+      }
+      .tools button {
+        border: none;
+        background: none;
+        min-width: 30px;
+        height: 25px;
+        cursor: pointer;
+      }
+      .tools .sep {
+        width: 1px;
+        height: 25px;
+        margin: 0 8px;
+        background-color: #0003;
+      }
+      .tools-top {
+        bottom: calc(100% + 15px);
+      }
+      .tools-bottom {
+        width: 100%;
+        padding: 4px;
+        top: calc(100% + 15px);
+      }
+      .tools-bottom textarea {
+        min-height: 65px;
+        width: 100%;
+        box-sizing: border-box;
       }
       .comment {
         position: absolute;
@@ -495,44 +678,13 @@ const fgDark = '#141518',
         top: calc(50% - 5px);
         cursor: w-resize;
       }
-      .tools {
-        border-radius: 3px;
-        position: absolute;
-        background: #fffd;
-        border: solid 1px #0003;
-        display: flex;
-      }
-      .tools button {
-        border: none;
-        background: none;
-        min-width: 30px;
-        cursor: pointer;
-      }
-      .tools .sep {
-        width: 1px;
-        height: 100%;
-        margin: 0 8px;
-        background-color: #0003;
-      }
-      .tools-top {
-        bottom: calc(100% + 15px);
-      }
-      .tools-bottom {
-        width: 100%;
-        padding: 4px;
-        top: calc(100% + 15px);
-      }
-      .tools-bottom textarea {
-        min-height: 65px;
-        width: 100%;
-        box-sizing: border-box;
-      }
     `,
   ],
   providers: [ResizerService],
 })
 export class CanvasTextEditorComponent {
   protected resizers = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+  protected shapeOptions = shapeOptions;
   protected colorOptions = colorOptions;
 
   constructor(protected readonly model: PlayerCanvasModel, private readonly resizerSvc: ResizerService) {}
@@ -546,9 +698,31 @@ export class CanvasTextEditorComponent {
     evt.stopImmediatePropagation();
   }
 
-  protected handleColorClick(comment: IComment, color: IColor) {
+  protected handleBgClick(comment: IComment, color: IColor) {
     comment.background = color.bg;
     comment.fillColor = color.fg;
+  }
+
+  protected handleShapeClick(comment: IComment, shape: string) {
+    comment.shape = shape;
+  }
+
+  protected handleToggleShadowClick(comment: IComment) {
+    comment.shadowBlur = comment.shadowBlur ? 0 : 15;
+  }
+
+  protected handleBorderColorClick(comment: IComment, color: string) {
+    comment.borderColor = color;
+    if (!comment.borderWidth) {
+      comment.borderWidth = 4;
+    }
+  }
+
+  protected handleBorderWidthClick(comment: IComment, width: number) {
+    comment.borderWidth = width;
+    if (comment.borderColor === '#0000') {
+      comment.borderColor = '#000';
+    }
   }
 
   protected handleMousedown(comment: IComment, origEvt: MouseEvent) {
