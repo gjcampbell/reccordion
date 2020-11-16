@@ -209,8 +209,8 @@ export class CommentLayer implements IVideoLayer {
           comment.text,
           comment.position.x + comment.padding,
           comment.position.y + comment.padding,
-          comment.width + comment.padding * 2,
-          comment.height + comment.padding * 2
+          comment.width - comment.padding * 2,
+          comment.height - comment.padding * 2
         );
       }
     }

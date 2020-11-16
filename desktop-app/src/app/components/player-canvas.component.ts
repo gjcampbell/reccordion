@@ -282,26 +282,26 @@ const fgDark = '#141518',
   fgLight = '#ECF0F1',
   color = (bg: string, fg: string) => ({ bg, fg }),
   colorOptions = [
-    color('#7F8C8D', fgDark),
-    color('#BDC3C8', fgDark),
-    color('#BF3A22', fgDark),
-    color('#D25600', fgDark),
-    color('#F29E00', fgLight),
-    color('#95A5A6', fgLight),
-    color('#ECF0F1', fgLight),
-    color('#E64D33', fgLight),
-    color('#E58000', fgLight),
-    color('#F0C600', fgLight),
-    color('#2C3D52', fgDark),
-    color('#8D40B4', fgDark),
-    color('#2B7EBF', fgDark),
-    color('#2EAF53', fgDark),
-    color('#1FA083', fgDark),
-    color('#344860', fgLight),
-    color('#9A56BD', fgLight),
-    color('#3796E1', fgLight),
-    color('#36CD62', fgDark),
     color('#25BC99', fgDark),
+    color('#36CD62', fgDark),
+    color('#3796E1', fgDark),
+    color('#9A56BD', fgDark),
+    color('#344860', fgLight),
+    color('#1FA083', fgLight),
+    color('#2EAF53', fgLight),
+    color('#2B7EBF', fgLight),
+    color('#8D40B4', fgLight),
+    color('#2C3D52', fgLight),
+    color('#F0C600', fgDark),
+    color('#E58000', fgDark),
+    color('#E64D33', fgDark),
+    color('#ECF0F1', fgDark),
+    color('#95A5A6', fgDark),
+    color('#F29E00', fgLight),
+    color('#D25600', fgLight),
+    color('#BF3A22', fgLight),
+    color('#BDC3C8', fgDark),
+    color('#7F8C8D', fgDark),
   ] as IColor[];
 
 @Component({
@@ -321,7 +321,72 @@ const fgDark = '#141518',
         ></div>
         <ng-container *ngIf="model.isSelected(comment)">
           <div class="tools tools-top">
-            <button mat-icon-button><i class="fa fa-fw fa-bold"></i></button>
+            <button [matMenuTriggerFor]="menu" matTooltip="Select Color">
+              <i class="fa fa-fa fa-square color-picker" [style.color]="comment.background"></i>
+            </button>
+            <mat-menu #menu="matMenu">
+              <div class="colors">
+                <div
+                  *ngFor="let color of colorOptions"
+                  (click)="handleColorClick(comment, color)"
+                  class="color"
+                  [style.backgroundColor]="color.bg"
+                  [style.color]="color.fg"
+                >
+                  text
+                </div>
+              </div>
+            </mat-menu>
+            <div class="sep"></div>
+            <button
+              mat
+              (click)="comment.align = 'left'"
+              [class.active]="comment.align === 'left'"
+              matTooltip="Align Left"
+            >
+              <i class="fa fa-fa fa-align-left"></i>
+            </button>
+            <button
+              mat
+              (click)="comment.align = 'center'"
+              [class.active]="comment.align === 'center'"
+              matTooltip="Align Center"
+            >
+              <i class="fa fa-fa fa-align-center"></i>
+            </button>
+            <button
+              mat
+              (click)="comment.align = 'right'"
+              [class.active]="comment.align === 'right'"
+              matTooltip="Align Right"
+            >
+              <i class="fa fa-fa fa-align-right"></i>
+            </button>
+            <div class="sep"></div>
+            <button
+              mat
+              (click)="comment.vAlign = 'top'"
+              [class.active]="comment.vAlign === 'top'"
+              matTooltip="Align Top"
+            >
+              <i class="fa fa-fa fa-grip-lines top"></i>
+            </button>
+            <button
+              mat
+              (click)="comment.vAlign = 'middle'"
+              [class.active]="comment.vAlign === 'middle'"
+              matTooltip="Align Middle"
+            >
+              <i class="fa fa-fa fa-grip-lines middle"></i>
+            </button>
+            <button
+              mat
+              (click)="comment.vAlign = 'bottom'"
+              [class.active]="comment.vAlign === 'bottom'"
+              matTooltip="Align Bottom"
+            >
+              <i class="fa fa-fa fa-grip-lines bottom"></i>
+            </button>
           </div>
           <div
             *ngFor="let resizer of resizers"
@@ -337,6 +402,38 @@ const fgDark = '#141518',
   `,
   styles: [
     `
+      .colors {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        grid-template-rows: 1fr 1fr 1fr 1fr;
+        height: 160px;
+        width: 200px;
+      }
+      .color {
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        line-height: 40px;
+        vertical-align: middle;
+        cursor: pointer;
+        box-sizing: border-box;
+        border: solid 2px #0000;
+      }
+      .color:hover {
+        border: solid 2px #000;
+      }
+      .tools button.active {
+        background: #8d40b4;
+        color: #fff;
+      }
+      .fa-grip-lines.top {
+        line-height: 0;
+        vertical-align: top;
+      }
+      .fa-grip-lines.bottom {
+        line-height: 0;
+        vertical-align: bottom;
+      }
       .comment {
         position: absolute;
         user-select: none;
@@ -401,7 +498,21 @@ const fgDark = '#141518',
       .tools {
         border-radius: 3px;
         position: absolute;
-        background: #000d;
+        background: #fffd;
+        border: solid 1px #0003;
+        display: flex;
+      }
+      .tools button {
+        border: none;
+        background: none;
+        min-width: 30px;
+        cursor: pointer;
+      }
+      .tools .sep {
+        width: 1px;
+        height: 100%;
+        margin: 0 8px;
+        background-color: #0003;
       }
       .tools-top {
         bottom: calc(100% + 15px);
@@ -422,6 +533,7 @@ const fgDark = '#141518',
 })
 export class CanvasTextEditorComponent {
   protected resizers = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+  protected colorOptions = colorOptions;
 
   constructor(protected readonly model: PlayerCanvasModel, private readonly resizerSvc: ResizerService) {}
 
@@ -432,6 +544,11 @@ export class CanvasTextEditorComponent {
   protected handleClick(comment: IComment, evt: MouseEvent) {
     this.model.select(comment);
     evt.stopImmediatePropagation();
+  }
+
+  protected handleColorClick(comment: IComment, color: IColor) {
+    comment.background = color.bg;
+    comment.fillColor = color.fg;
   }
 
   protected handleMousedown(comment: IComment, origEvt: MouseEvent) {

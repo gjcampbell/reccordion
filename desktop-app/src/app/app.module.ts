@@ -26,6 +26,7 @@ import { ScrubberComponent } from './components/scrubber.component';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -56,6 +57,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     HttpClientModule,
     MatButtonModule,
     MatDialogModule,
+    MatMenuModule,
     MatProgressSpinnerModule,
     MatSliderModule,
     MatTabsModule,
