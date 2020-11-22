@@ -62,6 +62,7 @@ export class ReqRendererService extends BaseRendererService {
       frameRate = video.frameRate || 25,
       writer = new WebMWriter({ quality: video.quality || 0.9999, frameRate });
 
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     const frames = await this.getFrames(rootVideo, video, ctx, progress);
 
     if (frames) {
@@ -142,6 +143,144 @@ export class RendererService extends BaseRendererService {
   }
 }
 
+@Injectable()
+export class ShapeService {
+  createStarPoints(
+    points: number,
+    innerRadiusPct: number,
+    startShape: { width: number; height: number; position: { x: number; y: number } }
+  ) {
+    const cx = startShape.width / 2 + startShape.position.x,
+      cy = startShape.height / 2 + startShape.position.y,
+      radius = Math.min(startShape.width / 2, startShape.height / 2),
+      innerRadius = radius * innerRadiusPct,
+      result: ShapePoint[] = [],
+      radianInc = (Math.PI * 2) / points,
+      halfInc = radianInc / 2,
+      startRad = halfInc;
+
+    for (let i = 0; i < points; i++) {
+      const radiansOuter = startRad + i * radianInc,
+        outerX = Math.sin(radiansOuter) * radius + cx,
+        outerY = Math.cos(radiansOuter) * radius + cy,
+        radiansInner = radiansOuter + halfInc,
+        innerX = Math.sin(radiansInner) * innerRadius + cx,
+        innerY = Math.cos(radiansInner) * innerRadius + cy;
+
+      result.push(new ShapePoint({ x: outerX, y: outerY }));
+      result.push(new ShapePoint({ x: innerX, y: innerY }));
+    }
+
+    return result;
+  }
+  createPolygon(
+    points: number,
+    startAngle: number,
+    startShape: { width: number; height: number; position: { x: number; y: number } }
+  ) {
+    const cx = startShape.width / 2 + startShape.position.x,
+      cy = startShape.height / 2 + startShape.position.y,
+      radius = Math.min(startShape.width / 2, startShape.height / 2),
+      radianInc = (Math.PI * 2) / points,
+      result: ShapePoint[] = [];
+
+    for (let i = 0; i < points; i++) {
+      const radians = startAngle + radianInc * i,
+        x = Math.sin(radians) * radius + cx,
+        y = Math.cos(radians) * radius + cy;
+
+      result.push(new ShapePoint({ x, y }));
+    }
+
+    return result;
+  }
+  createArrow(
+    angle: number,
+    lineLengthPct: number,
+    lineThicknessPct: number,
+    startShape: { width: number; height: number; position: { x: number; y: number } }
+  ) {
+    const cx = startShape.width / 2 + startShape.position.x,
+      cy = startShape.height / 2 + startShape.position.y,
+      halfThick = lineThicknessPct / 2,
+      arrowLen = 1 - lineLengthPct,
+      result: ShapePoint[] = [];
+  }
+}
+
+export interface Pt {
+  x: number;
+  y: number;
+}
+
+export const movePt = (pt: Pt, x: number, y: number) => {
+    pt.x += x;
+    pt.y += y;
+  },
+  copyPt = (pt: Pt | undefined) => {
+    return pt ? { ...pt } : undefined;
+  },
+  absPt = (pt: Pt) => {
+    return { x: Math.abs(pt.x), y: Math.abs(pt.y) };
+  },
+  scalePt = (pt: Pt, origin: Pt, scale: Pt) => {
+    const diff = diffPt(pt, origin),
+      diffDelt = multiplyPt(diff, scale);
+    return addPt(origin, diffDelt);
+  },
+  dividePt = (num: Pt, denom: Pt) => {
+    return {
+      x: num.x / denom.x,
+      y: num.y / denom.y,
+    };
+  },
+  diffPt = (first: Pt, second: Pt) => {
+    return {
+      x: first.x - second.x,
+      y: first.y - second.y,
+    };
+  },
+  addPt = (first: Pt, second: Pt) => {
+    return {
+      x: first.x + second.x,
+      y: first.y + second.y,
+    };
+  },
+  multiplyPt = (a: Pt, b: Pt) => {
+    return {
+      x: a.x * b.x,
+      y: a.y * b.y,
+    };
+  };
+
+export class ShapePoint {
+  public constructor(public pos: Pt, public cp1?: Pt, public cp2?: Pt) {}
+  public isCurve() {
+    return !!this.cp1;
+  }
+  public move(x: number, y: number) {
+    movePt(this.pos, x, y);
+    if (this.cp1) {
+      movePt(this.cp1, x, y);
+    }
+    if (this.cp2) {
+      movePt(this.cp2, x, y);
+    }
+  }
+  scale(origin: Pt, scale: Pt) {
+    this.pos = scalePt(this.pos, origin, scale);
+    if (this.cp1) {
+      this.cp1 = scalePt(this.cp1, origin, scale);
+    }
+    if (this.cp2) {
+      this.cp2 = scalePt(this.cp2, origin, scale);
+    }
+  }
+  public copy() {
+    return new ShapePoint(copyPt(this.pos), copyPt(this.cp1), copyPt(this.cp2));
+  }
+}
+
 export interface IComment {
   text: string;
   position: { x: number; y: number };
@@ -166,7 +305,7 @@ export interface IComment {
   shadowColor: string;
   shape: string;
   shapeData: any;
-  points: { x: number; y: number }[];
+  points: ShapePoint[];
 }
 
 export class CommentLayer implements IVideoLayer {
@@ -174,6 +313,13 @@ export class CommentLayer implements IVideoLayer {
 
   public getComments() {
     return this.comments;
+  }
+
+  public removeComment(comment: IComment) {
+    const idx = this.comments.indexOf(comment);
+    if (idx >= 0) {
+      this.comments.splice(idx, 1);
+    }
   }
 
   public addText(comment: Partial<IComment>) {
@@ -210,46 +356,60 @@ export class CommentLayer implements IVideoLayer {
   public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
     for (const comment of this.comments) {
       if (comment.startMs <= millisecond && comment.endMs >= millisecond) {
-        ctx.fillStyle = comment.background;
-        ctx.shadowBlur = comment.shadowBlur;
-        ctx.shadowColor = comment.shadowColor;
+        this.startShape(comment, ctx);
         if (comment.shape in this) {
           this[comment.shape](comment, ctx);
         }
-        ctx.shadowBlur = 0;
-        canvasTxt.align = comment.align;
-        canvasTxt.vAlign = comment.vAlign;
-        canvasTxt.fontSize = comment.fontSize;
-        canvasTxt.font = comment.font;
-        canvasTxt.lineHeight = comment.lineHeight;
-        ctx.fillStyle = comment.fillColor;
-        canvasTxt.drawText(
-          ctx,
-          comment.text,
-          comment.position.x + comment.padding,
-          comment.position.y + comment.padding,
-          comment.width - comment.padding * 2,
-          comment.height - comment.padding * 2
-        );
+        this.endShape(comment, ctx);
+
+        this.drawText(comment, ctx);
       }
     }
   }
+
+  private drawText(comment: IComment, ctx: CanvasRenderingContext2D) {
+    canvasTxt.align = comment.align;
+    canvasTxt.vAlign = comment.vAlign;
+    canvasTxt.fontSize = comment.fontSize;
+    canvasTxt.font = comment.font;
+    canvasTxt.lineHeight = comment.lineHeight;
+    ctx.fillStyle = comment.fillColor;
+    canvasTxt.drawText(
+      ctx,
+      comment.text,
+      comment.position.x + comment.padding,
+      comment.position.y + comment.padding,
+      comment.width - comment.padding * 2,
+      comment.height - comment.padding * 2
+    );
+  }
+
   private rect(comment: IComment, ctx: CanvasRenderingContext2D) {
-    ctx.fillRect(comment.position.x, comment.position.y, comment.width, comment.height);
-    ctx.shadowBlur = 0;
-    if (comment.borderWidth) {
-      ctx.strokeStyle = comment.borderColor;
-      ctx.lineWidth = comment.borderWidth;
-      ctx.strokeRect(comment.position.x, comment.position.y, comment.width, comment.height);
-    }
+    ctx.rect(comment.position.x, comment.position.y, comment.width, comment.height);
   }
   private circle(comment: IComment, ctx: CanvasRenderingContext2D) {
     const rx = comment.width / 2,
       ry = comment.height / 2,
       x = comment.position.x + rx,
       y = comment.position.y + ry;
-    ctx.beginPath();
     ctx.ellipse(x, y, rx, ry, 0, 0, 2 * Math.PI);
+  }
+  private points(comment: IComment, ctx: CanvasRenderingContext2D) {
+    for (const pt of comment.points.concat(comment.points[0])) {
+      if (pt.isCurve()) {
+        ctx.bezierCurveTo(pt.cp1.x, pt.cp1.y, pt.cp2.x, pt.cp2.y, pt.pos.x, pt.pos.y);
+      } else {
+        ctx.lineTo(pt.pos.x, pt.pos.y);
+      }
+    }
+  }
+  private startShape(comment: IComment, ctx: CanvasRenderingContext2D) {
+    ctx.fillStyle = comment.background;
+    ctx.shadowBlur = comment.shadowBlur;
+    ctx.shadowColor = comment.shadowColor;
+    ctx.beginPath();
+  }
+  private endShape(comment: IComment, ctx: CanvasRenderingContext2D) {
     ctx.fill();
     ctx.shadowBlur = 0;
     if (comment.borderWidth) {
@@ -382,7 +542,7 @@ export class VideoTimeRanges {
         localEnd: range.endMs,
         video: range.video,
         globalStart: total,
-        globalEnd: total += range.endMs,
+        globalEnd: (total += range.endMs),
       });
     }
   }

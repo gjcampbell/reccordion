@@ -205,10 +205,10 @@ export class RecorderComponent implements AfterViewInit {
 @Component({
   template: `
     <div mat-dialog-content>
-      <app-screen-picker (itemSelected)="handleSelected($event)"></app-screen-picker>
+      <app-screen-picker (itemSelected)="handleSelected($event)" [startRecording]="startRecording"></app-screen-picker>
     </div>
     <div mat-dialog-actions>
-      <button mat-button [disabled]="!canOpen" (click)="done()">Open</button>
+      <button mat-button color="primary" [disabled]="!canOpen" (click)="done()">Start Recording</button>
       <button mat-button (click)="cancel()">Cancel</button>
     </div>
   `,
@@ -219,6 +219,11 @@ export class ScreenPickerDialog {
   public get canOpen() {
     return !!this.selected;
   }
+
+  protected startRecording = (item: ICapturable) => {
+    this.selected = item;
+    this.dialogRef.close(item);
+  };
 
   constructor(private readonly dialogRef: MatDialogRef<ScreenPickerDialog>) {}
 

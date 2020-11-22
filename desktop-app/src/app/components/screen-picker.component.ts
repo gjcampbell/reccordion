@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
 import { ICapturable, RecordingService } from '../services/recording.service';
 
 @Component({
@@ -12,6 +12,7 @@ import { ICapturable, RecordingService } from '../services/recording.service';
             class="screen"
             *ngFor="let item of group.items"
             (click)="select(item)"
+            (dblclick)="selectAndRecord(item)"
             [class.selected]="item === selected"
           >
             <div class="screen-icon">
@@ -82,6 +83,8 @@ export class ScreenPickerComponent implements AfterViewInit {
   public selected?: ICapturable;
   @Output()
   public itemSelected = new EventEmitter<ICapturable>();
+  @Input()
+  public startRecording: (item: ICapturable) => void;
 
   constructor(private readonly recorder: RecordingService) {}
 
@@ -92,6 +95,11 @@ export class ScreenPickerComponent implements AfterViewInit {
   public select(item: ICapturable) {
     this.selected = item;
     this.itemSelected.emit(item);
+  }
+
+  public selectAndRecord(item: ICapturable) {
+    this.selected = item;
+    this.startRecording(item);
   }
 
   public refresh() {

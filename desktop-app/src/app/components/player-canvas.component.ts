@@ -10,7 +10,19 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import { CommentLayer, IBaseVideoLayer, IComment, IVideoLayer } from 'app/services/renderer.service';
+import { NgModelGroup } from '@angular/forms';
+import {
+  absPt,
+  CommentLayer,
+  diffPt,
+  dividePt,
+  IBaseVideoLayer,
+  IComment,
+  IVideoLayer,
+  Pt,
+  ShapePoint,
+  ShapeService,
+} from 'app/services/renderer.service';
 
 @Injectable()
 export class PlayerCanvasModel {
@@ -31,7 +43,14 @@ export class PlayerCanvasModel {
 @Component({
   selector: 'app-player-canvas',
   template: `
-    <canvas #cvs [height]="model.height" [width]="model.width" (click)="handleClick()"></canvas>
+    <canvas
+      #cvs
+      [width]="canvasWidth"
+      [height]="canvasHeight"
+      (click)="handleClick()"
+      [style.width.px]="model.width"
+      [style.height.px]="model.height"
+    ></canvas>
     <app-canvas-text-editor></app-canvas-text-editor>
   `,
   styles: [
@@ -48,6 +67,8 @@ export class PlayerCanvasModel {
 })
 export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
   private destroyed = false;
+  protected canvasWidth: number;
+  protected canvasHeight: number;
 
   @ViewChild('cvs')
   public cvs: ElementRef<HTMLCanvasElement>;
@@ -63,11 +84,13 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
   @Input()
   public set height(value: number) {
     this.model.height = value;
+    this.updateDim();
   }
 
   @Input()
   public set width(value: number) {
     this.model.width = value;
+    this.updateDim();
   }
 
   @Input()
@@ -89,6 +112,11 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
       this.model.ctx = this.cvs.nativeElement.getContext('2d');
       this.startCanvas();
     }
+  }
+
+  private updateDim() {
+    this.canvasHeight = this.model.height * window.devicePixelRatio;
+    this.canvasWidth = this.model.width * window.devicePixelRatio;
   }
 
   public handleClick() {
@@ -113,10 +141,13 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
 
   private draw() {
     const { ctx, layers, video } = this.model;
+    ctx.save();
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     ctx.clearRect(0, 0, 2000, 2000);
     for (const layer of layers) {
       layer.drawFrame(video.getCurrTimeMs(), ctx);
     }
+    ctx.restore();
   }
 }
 
@@ -126,6 +157,17 @@ interface IInitData {
   pos: { x: number; y: number };
   width: number;
   height: number;
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+interface IResizeable {
+  position: { x: number; y: number };
+  width: number;
+  height: number;
+  points: ShapePoint[];
 }
 
 @Injectable()
@@ -138,50 +180,72 @@ export class ResizerService {
     }
   }
 
+  private scalePoints(model: IResizeable, origin: Pt, scale: Pt) {
+    for (const pt of model.points) {
+      pt.scale(origin, scale);
+    }
+  }
+
   public nw(model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     const init = this.init(model, origEvt),
-      maxX = model.position.x + model.width,
-      maxY = model.position.y + model.height;
+      scaleOrigin = { x: init.right, y: init.bottom },
+      maxX = init.right - this.minSize,
+      maxY = init.bottom - this.minSize;
     this.bind(init, (deltX, deltY) => {
-      const newX = Math.max(0, Math.min(maxX - this.minSize, init.pos.x + deltX)),
-        newY = Math.max(0, Math.min(maxY - this.minSize, init.pos.y + deltY)),
-        newW = Math.max(this.minSize, Math.min(maxX, init.width - deltX)),
-        newH = Math.max(this.minSize, Math.min(maxY, init.height - deltY));
+      const newX = Math.max(0, Math.min(maxX, init.pos.x + deltX)),
+        newY = Math.max(0, Math.min(maxY, init.pos.y + deltY)),
+        newW = Math.max(this.minSize, Math.min(init.right, init.width - deltX)),
+        newH = Math.max(this.minSize, Math.min(init.bottom, init.height - deltY)),
+        scaleDenom = diffPt(model.position, scaleOrigin),
+        scaleNum = diffPt({ x: newX, y: newY }, scaleOrigin),
+        scale = dividePt(scaleNum, scaleDenom);
 
+      this.scalePoints(model, scaleOrigin, scale);
       this.updateModel(model, { newX, newY, newW, newH });
     });
   }
 
   public n(model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     const init = this.init(model, origEvt),
-      maxY = model.position.y + model.height;
+      scaleOrigin = { x: model.position.x, y: init.bottom },
+      maxY = init.bottom - this.minSize;
     this.bind(init, (deltX, deltY) => {
-      const newY = Math.max(0, Math.min(maxY - this.minSize, init.pos.y + deltY)),
-        newH = Math.max(this.minSize, Math.min(maxY, init.height - deltY));
+      const newY = Math.max(0, Math.min(maxY, init.pos.y + deltY)),
+        newH = Math.max(this.minSize, Math.min(init.bottom, init.height - deltY)),
+        scale = newH / model.height;
 
+      this.scalePoints(model, scaleOrigin, { x: 1, y: scale });
       this.updateModel(model, { newY, newH });
     });
   }
 
   public ne(model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     const init = this.init(model, origEvt),
-      maxW = bounds.width - model.position.x,
-      maxY = model.position.y + model.height;
+      scaleOrigin = { x: init.left, y: init.bottom },
+      maxY = init.bottom - this.minSize,
+      maxW = bounds.width - init.left;
     this.bind(init, (deltX, deltY) => {
-      const newY = Math.max(0, Math.min(maxY - this.minSize, init.pos.y + deltY)),
+      const newY = Math.max(0, Math.min(maxY, init.pos.y + deltY)),
         newW = Math.max(this.minSize, Math.min(maxW, init.width + deltX)),
-        newH = Math.max(this.minSize, Math.min(maxY, init.height - deltY));
+        newH = Math.max(this.minSize, Math.min(init.bottom, init.height - deltY)),
+        scaleDenom = { x: model.width, y: model.position.y - scaleOrigin.y },
+        scaleNum = { x: newW, y: newY - scaleOrigin.y },
+        scale = dividePt(scaleNum, scaleDenom);
 
+      this.scalePoints(model, scaleOrigin, scale);
       this.updateModel(model, { newY, newW, newH });
     });
   }
 
   public e(model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     const init = this.init(model, origEvt),
-      maxW = bounds.width - model.position.x;
+      scaleOrigin = { x: init.left, y: init.top },
+      maxW = bounds.width - init.left;
     this.bind(init, (deltX, deltY) => {
-      const newW = Math.max(this.minSize, Math.min(maxW, init.width + deltX));
+      const newW = Math.max(this.minSize, Math.min(maxW, init.width + deltX)),
+        scale = newW / model.width;
 
+      this.scalePoints(model, scaleOrigin, { x: scale, y: 1 });
       this.updateModel(model, { newW });
     });
   }
@@ -189,21 +253,29 @@ export class ResizerService {
   public se(model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     const init = this.init(model, origEvt),
       maxW = bounds.width - model.position.x,
-      maxH = bounds.height - model.position.y;
+      maxH = bounds.height - model.position.y,
+      scaleOrigin = { ...model.position };
     this.bind(init, (deltX, deltY) => {
       const newW = Math.max(this.minSize, Math.min(maxW, init.width + deltX)),
-        newH = Math.max(this.minSize, Math.min(maxH, init.height + deltY));
+        newH = Math.max(this.minSize, Math.min(maxH, init.height + deltY)),
+        scaleDenom = { x: model.width, y: model.height },
+        scaleNum = { x: newW, y: newH },
+        scale = dividePt(scaleNum, scaleDenom);
 
+      this.scalePoints(model, scaleOrigin, scale);
       this.updateModel(model, { newW, newH });
     });
   }
 
   public s(model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     const init = this.init(model, origEvt),
-      maxH = bounds.height - model.position.y;
+      maxH = bounds.height - model.position.y,
+      scaleOrigin = { ...model.position };
     this.bind(init, (deltX, deltY) => {
-      const newH = Math.max(this.minSize, Math.min(maxH, init.height + deltY));
+      const newH = Math.max(this.minSize, Math.min(maxH, init.height + deltY)),
+        scale = newH / model.height;
 
+      this.scalePoints(model, scaleOrigin, { x: 1, y: scale });
       this.updateModel(model, { newH });
     });
   }
@@ -211,23 +283,33 @@ export class ResizerService {
   public sw(model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     const init = this.init(model, origEvt),
       maxX = model.position.x + model.width,
-      maxH = bounds.height - model.position.y;
+      maxH = bounds.height - model.position.y,
+      scaleOrigin = { x: init.right, y: init.top };
     this.bind(init, (deltX, deltY) => {
       const newX = Math.max(0, Math.min(maxX - this.minSize, init.pos.x + deltX)),
         newW = Math.max(this.minSize, Math.min(maxX, init.width - deltX)),
-        newH = Math.max(this.minSize, Math.min(maxH, init.height + deltY));
+        newH = Math.max(this.minSize, Math.min(maxH, init.height + deltY)),
+        scaleDenom = { x: model.position.x - scaleOrigin.x, y: model.height },
+        scaleNum = { x: newX - scaleOrigin.x, y: newH },
+        scale = dividePt(scaleNum, scaleDenom);
 
+      this.scalePoints(model, scaleOrigin, scale);
       this.updateModel(model, { newX, newW, newH });
     });
   }
 
   public w(model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     const init = this.init(model, origEvt),
-      maxX = model.position.x + model.width;
+      maxX = model.position.x + model.width,
+      scaleOrigin = { x: init.right, y: init.top };
     this.bind(init, (deltX, deltY) => {
       const newX = Math.max(0, Math.min(maxX - this.minSize, init.pos.x + deltX)),
-        newW = Math.max(this.minSize, Math.min(maxX, init.width - deltX));
+        newW = Math.max(this.minSize, Math.min(maxX, init.width - deltX)),
+        scaleDenom = model.position.x - scaleOrigin.x,
+        scaleNum = newX - scaleOrigin.x,
+        scale = scaleNum / scaleDenom;
 
+      this.scalePoints(model, scaleOrigin, { x: scale, y: 1 });
       this.updateModel(model, { newX, newW });
     });
   }
@@ -254,6 +336,10 @@ export class ResizerService {
       pos: { ...model.position },
       width: model.width,
       height: model.height,
+      left: model.position.x,
+      right: model.position.x + model.width,
+      top: model.position.y,
+      bottom: model.position.y + model.height,
     };
   }
 
@@ -280,6 +366,7 @@ interface IColor {
 interface IShape {
   name: string;
   icon: string;
+  type: string;
 }
 
 const fgDark = '#141518',
@@ -307,13 +394,16 @@ const fgDark = '#141518',
     color('#BDC3C8', fgDark),
     color('#7F8C8D', fgDark),
   ] as IColor[],
-  shape = (name: string, icon: string) => ({ name, icon }),
+  shape = (name: string, icon: string, type: string = 'points') => ({ name, icon, type }),
   shapeOptions = [
-    shape('rect', 'fa-square'),
-    shape('circle', 'fa-circle'),
+    shape('rect', 'fa-square', 'rect'),
+    shape('circle', 'fa-circle', 'circle'),
     shape('arrow', 'fa-long-arrow-alt-right'),
-    shape('triangle', 'fa-play'),
-    shape('star', 'fa-play'),
+    shape('triangle-up', 'fa-play fa-rotate-270'),
+    shape('triangle-right', 'fa-play'),
+    shape('triangle-down', 'fa-play fa-rotate-90'),
+    shape('triangle-left', 'fa-play fa-rotate-180'),
+    shape('star', 'fa-star'),
   ] as IShape[];
 
 @Component({
@@ -338,7 +428,7 @@ const fgDark = '#141518',
             </button>
             <mat-menu #shapeMenu="matMenu">
               <div class="shapes">
-                <div *ngFor="let shape of shapeOptions" class="shape" (click)="handleShapeClick(comment, shape.name)">
+                <div *ngFor="let shape of shapeOptions" class="shape" (click)="handleShapeClick(comment, shape)">
                   <i [class]="'fa fa-fw ' + shape.icon"></i>
                 </div>
               </div>
@@ -487,6 +577,15 @@ const fgDark = '#141518',
               matTooltip="Align Bottom"
             >
               <i class="fa fa-fw fa-grip-lines bottom"></i>
+            </button>
+            <div class="sep"></div>
+            <button
+              mat
+              (click)="delete(comment, layer)"
+              [class.active]="comment.vAlign === 'bottom'"
+              matTooltip="Delete Comment"
+            >
+              <i class="fa fa-fw fa-trash"></i>
             </button>
           </div>
           <div
@@ -680,17 +779,25 @@ const fgDark = '#141518',
       }
     `,
   ],
-  providers: [ResizerService],
+  providers: [ResizerService, ShapeService],
 })
 export class CanvasTextEditorComponent {
   protected resizers = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
   protected shapeOptions = shapeOptions;
   protected colorOptions = colorOptions;
 
-  constructor(protected readonly model: PlayerCanvasModel, private readonly resizerSvc: ResizerService) {}
+  constructor(
+    protected readonly model: PlayerCanvasModel,
+    private readonly resizerSvc: ResizerService,
+    private readonly shapeService: ShapeService
+  ) {}
 
   protected getCommentLayers() {
     return this.model.layers.filter((l) => l instanceof CommentLayer) as CommentLayer[];
+  }
+
+  protected delete(comment: IComment, layer: CommentLayer) {
+    layer.removeComment(comment);
   }
 
   protected handleClick(comment: IComment, evt: MouseEvent) {
@@ -703,8 +810,24 @@ export class CanvasTextEditorComponent {
     comment.fillColor = color.fg;
   }
 
-  protected handleShapeClick(comment: IComment, shape: string) {
-    comment.shape = shape;
+  protected handleShapeClick(comment: IComment, shape: IShape) {
+    comment.shape = shape.type;
+    comment.points = this.getShapePoints(shape.name, comment) || [];
+  }
+
+  private getShapePoints(name: string, comment: IComment) {
+    switch (name) {
+      case 'star':
+        return this.shapeService.createStarPoints(5, 0.5, comment);
+      case 'triangle-up':
+        return this.shapeService.createPolygon(3, Math.PI, comment);
+      case 'triangle-right':
+        return this.shapeService.createPolygon(3, Math.PI / 2, comment);
+      case 'triangle-down':
+        return this.shapeService.createPolygon(3, 0, comment);
+      case 'triangle-left':
+        return this.shapeService.createPolygon(3, Math.PI * 1.5, comment);
+    }
   }
 
   protected handleToggleShadowClick(comment: IComment) {
@@ -736,8 +859,12 @@ export class CanvasTextEditorComponent {
         const deltX = evt.pageX - pageX,
           deltY = evt.pageY - pageY,
           newX = Math.min(this.model.width - comment.width, Math.max(0, startPos.x + deltX)),
-          newY = Math.min(this.model.height - comment.height, Math.max(0, startPos.y + deltY));
-
+          newY = Math.min(this.model.height - comment.height, Math.max(0, startPos.y + deltY)),
+          actualDeltX = newX - comment.position.x,
+          actualDeltY = newY - comment.position.y;
+        for (let i = 0; i < comment.points.length; i++) {
+          comment.points[i].move(actualDeltX, actualDeltY);
+        }
         comment.position.x = newX;
         comment.position.y = newY;
       };
@@ -763,10 +890,4 @@ export class CanvasTextEditorComponent {
       top: comment.position.y + 'px',
     };
   }
-}
-
-interface IResizeable {
-  position: { x: number; y: number };
-  width: number;
-  height: number;
 }
