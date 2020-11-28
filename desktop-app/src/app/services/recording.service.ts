@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ElectronService } from 'app/services/electron.service';
+import { ICapturable, ICapturer } from './video.models';
 declare var MediaRecorder: {
   /**
    * https://developer.mozilla.org/en-US/docs/Web/Media/Formats/codecs_parameter
@@ -13,24 +14,6 @@ declare var MediaRecorder: {
   ondataavailable: (event: BlobEvent) => void;
   onstop: () => void;
 };
-
-export interface ICapturable {
-  name: string;
-  isScreen: boolean;
-  id: string;
-  iconUrl: string;
-  previewUrl: string;
-  displayId: string;
-}
-
-export interface ICapturer {
-  getStream: () => MediaStream;
-  getBlob: () => Blob;
-  getDuration: () => number;
-  pause: () => Promise<void>;
-  capture: () => void;
-  isRecording: () => boolean;
-}
 
 @Injectable()
 export class RecordingService {

@@ -1,0 +1,176 @@
+@import '../../../theme.scss';
+.shapes {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.shape {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: solid 2px #0000;
+}
+.shape:hover {
+  border-color: #000;
+}
+.shape i {
+  font-size: 1.3rem;
+}
+.borders {
+  display: flex;
+}
+.border-widths {
+  display: grid;
+  width: 45px;
+  grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+}
+.border-widths .width {
+  cursor: pointer;
+  box-sizing: border-box;
+  border: solid 2px #0000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.border-widths .width div {
+  background: #000;
+  width: 27px;
+}
+.border-widths .width:hover {
+  border-color: #000;
+}
+.color-picker {
+  border: solid 1px #0008;
+}
+.colors {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  width: 225px;
+}
+.color {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  height: 25px;
+  vertical-align: middle;
+  cursor: pointer;
+  box-sizing: border-box;
+  border: solid 2px #0000;
+}
+.border-colors {
+}
+.color-none {
+  grid-column-start: 1;
+  grid-column-end: 4;
+}
+.color:hover {
+  border: solid 2px #000;
+}
+.tools button.active {
+  background: $selection;
+  color: #fff;
+}
+.fa-grip-lines.top {
+  line-height: 0;
+  vertical-align: top;
+}
+.fa-grip-lines.bottom {
+  line-height: 0;
+  vertical-align: bottom;
+}
+.tools {
+  border-radius: 3px;
+  position: absolute;
+  background: #fffd;
+  border: solid 1px #0003;
+  display: flex;
+}
+.tools button {
+  border: none;
+  background: none;
+  min-width: 30px;
+  height: 25px;
+  cursor: pointer;
+}
+.tools .sep {
+  width: 1px;
+  height: 25px;
+  margin: 0 8px;
+  background-color: #0003;
+}
+.tools-top {
+  bottom: calc(100% + 15px);
+}
+.tools-bottom {
+  width: 100%;
+  padding: 4px;
+  top: calc(100% + 15px);
+}
+.tools-bottom textarea {
+  min-height: 65px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.comment {
+  position: absolute;
+  user-select: none;
+}
+.comment-dragbox.selected,
+.comment-dragbox:hover {
+  background: #27b3;
+}
+.comment-dragbox {
+  width: 100%;
+  height: 100%;
+}
+.resizer {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border-radius: 2px;
+  border: solid 1px #000;
+  background: #fff;
+}
+.resizer-nw {
+  left: -10px;
+  top: -10px;
+  cursor: nw-resize;
+}
+.resizer-n {
+  left: calc(50% - 5px);
+  top: -10px;
+  cursor: n-resize;
+}
+.resizer-ne {
+  right: -10px;
+  top: -10px;
+  cursor: ne-resize;
+}
+.resizer-e {
+  right: -10px;
+  top: calc(50% - 5px);
+  cursor: e-resize;
+}
+.resizer-se {
+  right: -10px;
+  bottom: -10px;
+  cursor: se-resize;
+}
+.resizer-s {
+  left: calc(50% - 5px);
+  bottom: -10px;
+  cursor: s-resize;
+}
+.resizer-sw {
+  left: -10px;
+  bottom: -10px;
+  cursor: sw-resize;
+}
+.resizer-w {
+  left: -10px;
+  top: calc(50% - 5px);
+  cursor: w-resize;
+}

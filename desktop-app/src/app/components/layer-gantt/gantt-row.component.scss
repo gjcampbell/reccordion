@@ -1,0 +1,70 @@
+@import '../../../theme.scss';
+
+$row-height: 25px;
+$row-font-size: 0.75rem;
+
+@mixin item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row {
+  font-size: $row-font-size;
+  line-height: $row-height;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+}
+.item {
+  height: 25px;
+  display: grid;
+  width: 100%;
+  grid-template-columns: 100px 1fr;
+}
+.item-header {
+  height: 100%;
+  @include item-text;
+}
+.item-gutter {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.item-length {
+  position: absolute;
+  user-select: none;
+  box-sizing: border-box;
+
+  &:hover:before {
+    width: 100%;
+    height: 100%;
+    background-color: opacify($color: $selection, $amount: 0.3);
+    cursor: pointer;
+    content: '';
+    position: absolute;
+  }
+
+  &.selected {
+    background: $selection;
+  }
+
+  .handle {
+    cursor: col-resize;
+    position: absolute;
+    width: 12px;
+    height: 100%;
+    margin: 0 -4px;
+    min-width: 16px;
+    user-select: none;
+  }
+
+  .right-handle {
+    right: 0;
+  }
+
+  .text {
+    @include item-text;
+    padding: 0 0.5rem;
+  }
+}

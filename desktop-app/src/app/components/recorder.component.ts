@@ -2,15 +2,10 @@ import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angula
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ConverterService } from 'app/services/converter.service';
 import { ElectronService } from 'app/services/electron.service';
-import {
-  CommentLayer,
-  IBaseVideoLayer,
-  IVideo,
-  IVideoLayer,
-  ReqRendererService,
-  WebmBlobSeriesLayer,
-} from 'app/services/renderer.service';
-import { ICapturable, ICapturer, RecordingService } from '../services/recording.service';
+import { CommentLayer } from 'app/services/graphics.models';
+import { ReqRendererService, WebmBlobSeriesLayer } from 'app/services/renderer.service';
+import { ICapturer, IVideoLayer, ICapturable, IVideo, IBaseVideoLayer } from 'app/services/video.models';
+import { RecordingService } from '../services/recording.service';
 import { PlayerComponent } from './player.component';
 
 @Component({
@@ -50,7 +45,6 @@ import { PlayerComponent } from './player.component';
         [video]="videoLayer"
         #player
       ></app-player>
-      <app-scrubber *ngIf="stopped" [layers]="layers" [video]="videoLayer"></app-scrubber>
     </ng-container>
   `,
   styles: [

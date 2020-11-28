@@ -1,19 +1,7 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  EventEmitter,
-  HostBinding,
-  Input,
-  NgZone,
-  Output,
-  ViewChild,
-} from '@angular/core';
-import { MatSliderChange } from '@angular/material/slider';
-import { DomSanitizer } from '@angular/platform-browser';
-import { ICapturer } from 'app/services/recording.service';
-import { IBaseVideoLayer, IVideoLayer } from 'app/services/renderer.service';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, Output, ViewChild } from '@angular/core';
+import { IVideoLayer, ICapturer, IBaseVideoLayer } from 'app/services/video.models';
 import { PlayerCanvasComponent } from './player-canvas.component';
+import { PlayerCanvasModel } from './player-canvas.model';
 
 @Component({
   selector: 'app-player',
@@ -48,8 +36,6 @@ import { PlayerCanvasComponent } from './player-canvas.component';
         (clicked)="togglePlay()"
         [height]="height"
         [width]="width"
-        [layers]="layers"
-        [video]="video"
       ></app-player-canvas>
     </app-video-sizer>
     <div class="play-bar">
@@ -57,10 +43,7 @@ import { PlayerCanvasComponent } from './player-canvas.component';
         <button mat-icon-button class="play" color="accent" (click)="togglePlay()">
           <i class="fa fa-fw" [class.fa-play]="videoEl.paused" [class.fa-pause]="!videoEl.paused"></i>
         </button>
-      </ng-container>
-
-      <ng-container *ngIf="!isLive">
-        <div *ngIf="isLive" class="live-bar"></div>
+        <app-layer-gantt></app-layer-gantt>
       </ng-container>
     </div>
   `,
@@ -105,14 +88,18 @@ import { PlayerCanvasComponent } from './player-canvas.component';
       }
       .play-bar {
         display: flex;
-        align-items: center;
+        align-items: stretch;
       }
       .time {
         min-width: 4rem;
         text-align: right;
       }
+      app-layer-gantt {
+        flex: 1 1 auto;
+      }
     `,
   ],
+  providers: [PlayerCanvasModel],
 })
 export class PlayerComponent implements AfterViewInit {
   private _currentTime = 0;
@@ -134,14 +121,27 @@ export class PlayerComponent implements AfterViewInit {
     return this.capturer && !this.capturer.isRecording();
   }
 
+  @Output()
+  public clicked = new EventEmitter<void>();
+
   @Input()
-  public layers: IVideoLayer[];
+  public set layers(value: IVideoLayer[]) {
+    this.model.layers = value;
+  }
+  public get layers() {
+    return this.model.layers;
+  }
+
+  @Input()
+  public set video(value: IBaseVideoLayer) {
+    this.model.video = value;
+  }
+  public get video() {
+    return this.model.video;
+  }
 
   @Input()
   public capturer?: ICapturer;
-
-  @Input()
-  public video: IBaseVideoLayer;
 
   @Input()
   public set source(value: MediaStream | Blob) {
@@ -165,7 +165,7 @@ export class PlayerComponent implements AfterViewInit {
     return this.videoElementRef && this.videoElementRef.nativeElement;
   }
 
-  public constructor(private readonly zone: NgZone) {}
+  public constructor(private readonly zone: NgZone, protected readonly model: PlayerCanvasModel) {}
 
   public ngAfterViewInit() {}
 

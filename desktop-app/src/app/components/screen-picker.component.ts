@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
-import { ICapturable, RecordingService } from '../services/recording.service';
+import { ICapturable } from 'app/services/video.models';
+import { RecordingService } from '../services/recording.service';
 
 @Component({
   selector: 'app-screen-picker',

@@ -1,0 +1,172 @@
+<ng-container *ngFor="let layer of getCommentLayers()">
+  <div
+    class="comment"
+    *ngFor="let comment of layer.getComments()"
+    [class.selected]="model.isSelected(comment)"
+    [style]="getStyle(layer, comment)"
+  >
+    <div class="comment-dragbox" (click)="handleClick(comment)" (mousedown)="handleMousedown(comment, $event)"></div>
+    <ng-container *ngIf="model.isSelected(comment)">
+      <div class="tools tools-top">
+        <button [matMenuTriggerFor]="shapeMenu" matTooltip="Select Shape">
+          <i class="fa fa-fw fa-shapes"></i>
+        </button>
+        <mat-menu #shapeMenu="matMenu">
+          <div class="shapes">
+            <div *ngFor="let shape of shapeOptions" class="shape" (click)="handleShapeClick(comment, shape)">
+              <i [class]="'fa fa-fw ' + shape.icon"></i>
+            </div>
+          </div>
+        </mat-menu>
+        <button [matMenuTriggerFor]="colorMenu" matTooltip="Select Background">
+          <i
+            class="fa fa-fw color-picker"
+            [style.color]="comment.background === '#0000' ? '#000' : comment.background"
+            [class.fa-square]="comment.background !== '#0000'"
+            [class.fa-ban]="comment.background === '#0000'"
+          ></i>
+        </button>
+        <mat-menu #colorMenu="matMenu">
+          <div class="colors bg-colors">
+            <div class="color color-none" (click)="handleBgClick(comment, { bg: '#0000', fg: '#000' })">
+              No Background
+            </div>
+            <div
+              class="color"
+              (click)="handleBgClick(comment, { bg: '#000', fg: '#fff' })"
+              [style.backgroundColor]="'#000'"
+              [style.color]="'#fff'"
+            >
+              text
+            </div>
+            <div
+              class="color"
+              (click)="handleBgClick(comment, { bg: '#fff', fg: '#000' })"
+              [style.backgroundColor]="'#fff'"
+            >
+              text
+            </div>
+            <div
+              *ngFor="let color of colorOptions"
+              (click)="handleBgClick(comment, color)"
+              class="color"
+              [style.backgroundColor]="color.bg"
+              [style.color]="color.fg"
+            >
+              text
+            </div>
+          </div>
+        </mat-menu>
+        <button [matMenuTriggerFor]="borderMenu" matTooltip="Select Border">
+          <i
+            class="fa fa-fw color-picker"
+            [class.fa-square]="comment.borderColor !== '#0000'"
+            [class.fa-ban]="comment.borderColor === '#0000'"
+            [style.color]="comment.borderColor === '#0000' ? '#000' : comment.borderColor"
+          ></i>
+        </button>
+        <mat-menu #borderMenu="matMenu">
+          <div class="borders">
+            <div class="border-widths">
+              <div class="width" (click)="handleBorderWidthClick(comment, 8)">
+                <div [style.height.px]="8"></div>
+              </div>
+              <div class="width" (click)="handleBorderWidthClick(comment, 4)">
+                <div [style.height.px]="4"></div>
+              </div>
+              <div class="width" (click)="handleBorderWidthClick(comment, 2)">
+                <div [style.height.px]="2"></div>
+              </div>
+              <div class="width" (click)="handleBorderWidthClick(comment, 1)">
+                <div [style.height.px]="1"></div>
+              </div>
+              <div class="width" (click)="handleBorderWidthClick(comment, 0.5)">
+                <div [style.height.px]="0.5"></div>
+              </div>
+            </div>
+            <div class="colors border-colors">
+              <div class="color color-none" (click)="handleBorderColorClick(comment, '#0000')">No Border</div>
+              <div
+                class="color"
+                (click)="handleBorderColorClick(comment, '#000')"
+                [style.backgroundColor]="'#000'"
+              ></div>
+              <div
+                class="color"
+                (click)="handleBorderColorClick(comment, '#fff')"
+                [style.backgroundColor]="'#fff'"
+              ></div>
+              <div
+                *ngFor="let color of colorOptions"
+                (click)="handleBorderColorClick(comment, color.bg)"
+                class="color"
+                [style.backgroundColor]="color.bg"
+                [style.color]="color.fg"
+              ></div>
+            </div>
+          </div>
+        </mat-menu>
+        <button matTooltip="Shadow" [class.active]="!!comment.shadowBlur" (click)="handleToggleShadowClick(comment)">
+          <i class="fa fa-fw fa-clone fa-rotate-270"></i>
+        </button>
+        <div class="sep"></div>
+        <button mat (click)="comment.align = 'left'" [class.active]="comment.align === 'left'" matTooltip="Align Left">
+          <i class="fa fa-fw fa-align-left"></i>
+        </button>
+        <button
+          mat
+          (click)="comment.align = 'center'"
+          [class.active]="comment.align === 'center'"
+          matTooltip="Align Center"
+        >
+          <i class="fa fa-fw fa-align-center"></i>
+        </button>
+        <button
+          mat
+          (click)="comment.align = 'right'"
+          [class.active]="comment.align === 'right'"
+          matTooltip="Align Right"
+        >
+          <i class="fa fa-fw fa-align-right"></i>
+        </button>
+        <div class="sep"></div>
+        <button mat (click)="comment.vAlign = 'top'" [class.active]="comment.vAlign === 'top'" matTooltip="Align Top">
+          <i class="fa fa-fw fa-grip-lines top"></i>
+        </button>
+        <button
+          mat
+          (click)="comment.vAlign = 'middle'"
+          [class.active]="comment.vAlign === 'middle'"
+          matTooltip="Align Middle"
+        >
+          <i class="fa fa-fw fa-grip-lines middle"></i>
+        </button>
+        <button
+          mat
+          (click)="comment.vAlign = 'bottom'"
+          [class.active]="comment.vAlign === 'bottom'"
+          matTooltip="Align Bottom"
+        >
+          <i class="fa fa-fw fa-grip-lines bottom"></i>
+        </button>
+        <div class="sep"></div>
+        <button
+          mat
+          (click)="delete(comment, layer)"
+          [class.active]="comment.vAlign === 'bottom'"
+          matTooltip="Delete Comment"
+        >
+          <i class="fa fa-fw fa-trash"></i>
+        </button>
+      </div>
+      <div
+        *ngFor="let resizer of resizers"
+        [class]="'resizer resizer-' + resizer"
+        (mousedown)="handleResizerMousedown(comment, $event, resizer)"
+      ></div>
+      <div class="tools tools-bottom">
+        <textarea [(ngModel)]="comment.text"></textarea>
+      </div>
+    </ng-container>
+  </div>
+</ng-container>

@@ -18,7 +18,10 @@ import { RendererService, ReqRendererService } from './services/renderer.service
 
 import { AppComponent } from './app.component';
 import { ExportDialog, RecorderComponent, ScreenPickerDialog } from './components/recorder.component';
-import { CanvasTextEditorComponent, PlayerCanvasComponent } from './components/player-canvas.component';
+import { GanttRowComponent } from './components/layer-gantt/gantt-row.component';
+import { LayerGanttComponent } from './components/layer-gantt/layer-gantt.component';
+import { PlayerCanvasComponent } from './components/player-canvas.component';
+import { CanvasTextEditorComponent } from './components/canvas-text-editor/canvas-text-editor.component';
 import { PlayerComponent } from './components/player.component';
 import { VideoSizerComponent } from './components/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
@@ -42,6 +45,8 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     AppComponent,
     CanvasTextEditorComponent,
     ExportDialog,
+    GanttRowComponent,
+    LayerGanttComponent,
     PlayerCanvasComponent,
     PlayerComponent,
     RecorderComponent,

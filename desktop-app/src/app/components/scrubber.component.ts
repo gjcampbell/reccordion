@@ -1,5 +1,6 @@
-import { Component, ElementRef, HostBinding, Input, ViewChild } from '@angular/core';
-import { IBaseVideoLayer, IVideoLayer } from 'app/services/renderer.service';
+import { Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { IVideoLayer, IBaseVideoLayer } from 'app/services/video.models';
+import { PlayerCanvasModel } from './player-canvas.model';
 
 @Component({
   selector: 'app-scrubber',
@@ -58,14 +59,18 @@ import { IBaseVideoLayer, IVideoLayer } from 'app/services/renderer.service';
 export class ScrubberComponent {
   protected hpadding = 16;
 
-  @Input()
-  public layers: IVideoLayer[] = [];
+  public get layers() {
+    return this.canvasModel.layers;
+  }
 
-  @Input()
-  public video: IBaseVideoLayer;
+  public get video() {
+    return this.canvasModel.video;
+  }
 
   @ViewChild('container', { static: true })
   protected container: ElementRef<HTMLDivElement>;
+
+  constructor(private readonly canvasModel: PlayerCanvasModel) {}
 
   protected getBarPos() {
     return (this.video.getCurrTimeMs() / this.video.getDurationMs()) * 100 + '%';

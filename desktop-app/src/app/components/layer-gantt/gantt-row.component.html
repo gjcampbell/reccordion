@@ -1,0 +1,26 @@
+<div
+  class="row"
+  [class.multi-row]="model.multiRow"
+  [class.single-row]="!model.multiRow"
+  [class.selected]="isSelected(model)"
+>
+  <div class="header">{{ model.getType() }}</div>
+  <div class="items" #itemContainer>
+    <div *ngFor="let item of model.getItems()" class="item">
+      <div class="item-header">{{ model.getLabel(item) }}</div>
+      <div class="item-gutter">
+        <div
+          [class]="'item-length ' + getItemClass(item)"
+          [class.selected]="isSelected(item)"
+          [style]="getItemStyle(item)"
+          (click)="select(item)"
+          (mousedown)="handleItemMseDown($event, item)"
+        >
+          <div class="left-handle handle" (mousedown)="handleLeftMseDown($event, item)"></div>
+          <div class="right-handle handle" (mousedown)="handleRightMseDown($event, item)"></div>
+          <div class="text">{{ model.getLabel(item) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
