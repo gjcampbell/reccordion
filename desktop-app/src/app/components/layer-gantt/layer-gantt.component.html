@@ -1,5 +1,6 @@
-<app-scrubber></app-scrubber>
-<div class="seek-bar"></div>
+<div class="scrubber-container">
+  <app-scrubber></app-scrubber>
+</div>
 <div class="layers" *ngFor="let layer of canvasModel.layers">
   <app-gantt-row [model]="getLayerModel(layer)"></app-gantt-row>
 </div>

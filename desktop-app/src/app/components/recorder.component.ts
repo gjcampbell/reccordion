@@ -4,9 +4,17 @@ import { ConverterService } from 'app/services/converter.service';
 import { ElectronService } from 'app/services/electron.service';
 import { CommentLayer } from 'app/services/graphics.models';
 import { ReqRendererService, WebmBlobSeriesLayer } from 'app/services/renderer.service';
-import { ICapturer, IVideoLayer, ICapturable, IVideo, IBaseVideoLayer } from 'app/services/video.models';
+import {
+  ICapturer,
+  IVideoLayer,
+  ICapturable,
+  IVideo,
+  IBaseVideoLayer,
+  FrameSeriesLayer,
+} from 'app/services/video.models';
 import { RecordingService } from '../services/recording.service';
 import { PlayerComponent } from './player.component';
+import { Decoder, Reader, tools } from 'ts-ebml';
 
 @Component({
   selector: 'app-recorder',
@@ -77,7 +85,7 @@ export class RecorderComponent implements AfterViewInit {
   @ViewChild('player')
   public player: PlayerComponent;
   public stopped = false;
-  protected videoLayer = new WebmBlobSeriesLayer();
+  protected videoLayer: IBaseVideoLayer;
   private textLayer = new CommentLayer();
   public layers: IVideoLayer[] = [];
   public exporting = false;
@@ -85,10 +93,12 @@ export class RecorderComponent implements AfterViewInit {
   constructor(
     private readonly recorder: RecordingService,
     private readonly dialog: MatDialog,
-    private readonly electron: ElectronService
+    private readonly electron: ElectronService,
+    private readonly converter: ConverterService
   ) {
-    this.layers.push(this.videoLayer, this.textLayer);
+    this.videoLayer = new FrameSeriesLayer(this.converter);
     this.videoLayer.setDimensions(720, 480);
+    this.layers.push(this.videoLayer, this.textLayer);
   }
 
   public ngAfterViewInit() {}
@@ -183,9 +193,10 @@ export class RecorderComponent implements AfterViewInit {
         await this.capturer.pause();
       }
       const blob = this.capturer.getBlob();
+
       this.preview = blob;
       this.stopped = true;
-      this.videoLayer.ranges.addVideo(blob, this.capturer.getDuration());
+      this.videoLayer.addVideo(blob, this.capturer.getDuration(), this.videoLayer.getDurationMs());
     }
   }
 

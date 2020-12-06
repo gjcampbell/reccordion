@@ -1,3 +1,5 @@
+import { IFrameExtractor } from './interfaces';
+
 export type VideoEl = HTMLVideoElement & {
   requestVideoFrameCallback: (callback: (now: number, { mediaTime: number }) => void) => void;
 };
@@ -15,13 +17,16 @@ export interface VideoTimeRange {
   video: IVideoElement;
 }
 
-export interface IVideoElement {
+export interface IFrameIterator {
+  seek(timeMs: number): Promise<void>;
+  iterateFrames(frameHandler: (timeMs?: number) => Promise<boolean>, speed: number | undefined): Promise<void>;
+  durationMs: number;
+}
+
+export interface IVideoElement extends IFrameIterator {
   w: number;
   h: number;
   videoEl: VideoEl;
-  durationMs: number;
-  iterateFrames(frameHandler: (timeMs?: number) => Promise<boolean>, speed: number | undefined): Promise<void>;
-  seek(timeMs: number): Promise<void>;
 }
 
 interface VideoClip {
@@ -38,6 +43,7 @@ export interface IVideoLayer {
 }
 
 export interface IBaseVideoLayer extends IVideoLayer {
+  onFrameChanged: (mills: number) => void;
   iterateFrames(handleFrame: (mills) => Promise<boolean>): Promise<void>;
   isPlaying(): boolean;
   play(): Promise<void>;
@@ -45,8 +51,8 @@ export interface IBaseVideoLayer extends IVideoLayer {
   seek(mills: number): Promise<void>;
   getDurationMs(): number;
   getCurrTimeMs(): number;
-  onFrameChanged: (mills: number) => void;
-  ranges: VideoTimeRanges;
+  isEmpty(): boolean;
+  addVideo(blob: Blob, durationMs: number, startMs: number): Promise<void>;
 }
 
 export interface IVideo {
@@ -171,11 +177,132 @@ export class VideoTimeRanges {
   }
 }
 
+export class TimeIterator {
+  public durationMs = 0;
+  private currentTimeMs = 0;
+  private startTime: Date;
+  public fps = 25;
+  public playing = false;
+  public async seek(timeMs: number): Promise<void> {
+    this.startTime = new Date();
+    this.currentTimeMs = timeMs;
+  }
+  public async play(): Promise<void> {
+    this.startTime = new Date();
+    this.playing = true;
+  }
+  public async pause(): Promise<void> {
+    this.currentTimeMs = this.getTimeSinceStart();
+    this.playing = false;
+  }
+  public getTimeMs() {
+    return this.playing ? this.getTimeSinceStart() : this.currentTimeMs;
+  }
+  private getTimeSinceStart() {
+    const timeSincePlay = (new Date() as any) - (this.startTime as any),
+      playOffset = this.currentTimeMs + timeSincePlay;
+    return playOffset % this.durationMs;
+  }
+}
+
+export class FrameSeries {
+  private durationMs: number;
+  private frames: ImageBitmap[] = [];
+  public speedBoost: number = 1;
+  public offsetMs = 0;
+  public lengthMs: number;
+  public get endMs() {
+    return this.startMs - this.offsetMs + this.lengthMs;
+  }
+  constructor(frames: Blob[], private fps: number, public startMs: number) {
+    this.loadFrames(frames);
+    this.durationMs = frames.length * this.fps;
+    this.lengthMs = this.durationMs;
+  }
+
+  public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
+    const startMs = this.startMs - this.offsetMs,
+      endMs = this.startMs - this.offsetMs + this.lengthMs;
+    if (startMs <= millisecond && endMs >= millisecond) {
+      const frameIdxOffset = this.offsetMs / this.fps,
+        frameIdx = (millisecond - startMs) / this.fps + frameIdxOffset,
+        frame = this.frames[Math.min(0, Math.max(this.frames.length - 1, Math.floor(frameIdx)))];
+
+      ctx.drawImage(frame, 0, 0);
+    }
+  }
+  public getOriginalDuration() {
+    return this.durationMs;
+  }
+  private async loadFrames(frames: Blob[]) {
+    for (const item of frames) {
+      this.frames.push(await createImageBitmap(item));
+    }
+  }
+}
+
+export class FrameSeriesLayer implements IBaseVideoLayer {
+  public w: number;
+  public h: number;
+  private seriesSets: FrameSeries[] = [];
+  public timeIterator = new TimeIterator();
+  constructor(private frameExtractor: IFrameExtractor) {}
+
+  public onFrameChanged: (mills: number) => void;
+  public isEmpty() {
+    return this.seriesSets.length > 0;
+  }
+  public getSeries() {
+    return this.seriesSets;
+  }
+  public iterateFrames(handleFrame: (mills: any) => Promise<boolean>): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+  public isPlaying(): boolean {
+    return this.timeIterator.playing;
+  }
+  public async play() {
+    this.timeIterator.play();
+  }
+  public async pause() {
+    this.timeIterator.pause();
+  }
+  public async seek(mills: number) {
+    this.timeIterator.seek(mills);
+  }
+  public getDurationMs() {
+    return this.timeIterator.durationMs;
+  }
+  public setDurationMs(value: number) {
+    this.timeIterator.durationMs = value;
+  }
+  public getCurrTimeMs(): number {
+    return this.timeIterator.getTimeMs();
+  }
+  public setDimensions(width: number, height: number): void {
+    this.w = width;
+    this.h = height;
+  }
+  public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
+    for (const series of this.seriesSets) {
+      series.drawFrame(millisecond, ctx);
+    }
+  }
+  public async addVideo(blob: Blob, durationMs: number, startMs: number) {
+    const rawFrames = await this.frameExtractor.extractFrames(blob),
+      frameSeries = new FrameSeries(rawFrames.blobs, 25, startMs);
+
+    this.timeIterator.durationMs += frameSeries.getOriginalDuration();
+    this.seriesSets.push(frameSeries);
+  }
+}
+
 export class Video implements IVideoElement {
   public w!: number;
   public h!: number;
   public videoEl!: VideoEl;
   public durationMs: number;
+  public ctx: CanvasRenderingContext2D;
 
   private constructor(private readonly blob: Blob) {}
 
@@ -203,6 +330,7 @@ export class Video implements IVideoElement {
     }
     while (true) {
       const timeMs = await this.nextFrame();
+      this.ctx.drawImage(this.videoEl, 0, 0);
       if (!(await frameHandler(timeMs))) {
         this.pause();
         break;
@@ -234,11 +362,16 @@ export class Video implements IVideoElement {
 
   private async createVideoEl() {
     const videoEl = document.createElement('video') as VideoEl,
-      url = URL.createObjectURL(this.blob);
+      url = URL.createObjectURL(this.blob),
+      canvas = document.createElement('canvas');
 
     return new Promise<VideoEl>((resolver) => {
       videoEl.onloadedmetadata = () => {
         videoEl.onloadedmetadata = undefined;
+        canvas.width = videoEl.videoWidth;
+        canvas.height = videoEl.videoHeight;
+        this.ctx = canvas.getContext('2d');
+
         resolver(videoEl);
       };
       videoEl.src = url;

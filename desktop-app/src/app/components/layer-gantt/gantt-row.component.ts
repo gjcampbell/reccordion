@@ -2,7 +2,7 @@ import { Component, ElementRef, HostListener, Input, ViewChild } from '@angular/
 import { CommentLayer, IComment } from 'app/services/graphics.models';
 import { WebmBlobSeriesLayer } from 'app/services/renderer.service';
 import { Effect, EffectLayer } from 'app/services/effects.models';
-import { IBaseVideoLayer, IVideoLayer, VideoTimeRange } from 'app/services/video.models';
+import { FrameSeries, FrameSeriesLayer, IBaseVideoLayer, IVideoLayer, VideoTimeRange } from 'app/services/video.models';
 import { PlayerCanvasModel } from '../player-canvas.model';
 import { basename } from 'path';
 
@@ -62,7 +62,7 @@ export class EffectGanttRow extends BaseGanttRow<Effect> {
 
 export class VideoGanttRow extends BaseGanttRow<VideoTimeRange> {
   public canReorderItems = false;
-  constructor(private readonly layer: IBaseVideoLayer) {
+  constructor(private readonly layer: WebmBlobSeriesLayer) {
     super();
   }
   public getType() {
@@ -76,6 +76,28 @@ export class VideoGanttRow extends BaseGanttRow<VideoTimeRange> {
   }
   public getItemType(item: VideoTimeRange) {
     return 'recording';
+  }
+}
+
+export class FrameSeriesGanttRow extends BaseGanttRow<FrameSeries> {
+  public canReorderItems = false;
+  constructor(private readonly layer: FrameSeriesLayer) {
+    super();
+  }
+  public getType() {
+    return 'Video';
+  }
+  public getItems(): FrameSeries[] {
+    return this.layer.getSeries();
+  }
+  public getLabel(item: FrameSeries) {
+    return 'Recording';
+  }
+  public getItemType(item: FrameSeries) {
+    return 'recording';
+  }
+  public setEndMs(item: FrameSeries, value: number) {
+    //item.endMs = value;
   }
 }
 

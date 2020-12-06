@@ -56,6 +56,7 @@ export class RecordingService {
   private createCapturer(videoRecorder: MediaRecorder) {
     let duration = 0,
       startTime: number = 0;
+
     const chunks: Blob[] = [],
       result: ICapturer = {
         getStream: () => videoRecorder.stream,
@@ -69,6 +70,7 @@ export class RecordingService {
               chunks.push(e.data);
               resolve();
             };
+
             videoRecorder.requestData();
             videoRecorder.pause();
           }),

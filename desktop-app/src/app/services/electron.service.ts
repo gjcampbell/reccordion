@@ -42,6 +42,22 @@ export class ElectronService {
     }
   }
 
+  public getFiles(dir: string): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      this.fs.readdir(dir, (e, files) => {
+        if (e) {
+          reject(e);
+        } else {
+          resolve(files.map((f) => this.path.join(dir, f)));
+        }
+      });
+    });
+  }
+
+  public tempDirPath() {
+    return this.path.join(this.os.tmpdir(), v4());
+  }
+
   public tempFilePath(ext: string) {
     const file = `${v4()}.${ext}`,
       dir = this.os.tmpdir();
@@ -51,6 +67,19 @@ export class ElectronService {
 
   public getResourcePath() {
     return window.process.resourcesPath;
+  }
+
+  public pathJoin(...parts: string[]) {
+    return this.path.join(...parts);
+  }
+
+  public async mkDir(dir: string) {
+    this.fs.mkdirSync(dir);
+  }
+
+  public loadBlob(path: string, props: { type: string }) {
+    const fileBuff = this.fs.readFileSync(path);
+    return new Blob([fileBuff], props);
   }
 
   public async saveBlob(blob: Blob, path: string) {
@@ -72,6 +101,10 @@ export class ElectronService {
     return new Promise<void>((resolve, reject) => {
       const buff = this.childProcess.spawnSync(cmd, args, { windowsVerbatimArguments: true });
       if (buff.status !== 0) {
+        const decoder = new TextDecoder('utf-8'),
+          message = decoder.decode(buff.stderr);
+
+        console.log(`cmd error ${cmd} ${args.join(' ')}`, message);
         reject(`exit code: ${buff.status}`);
       } else {
         resolve();

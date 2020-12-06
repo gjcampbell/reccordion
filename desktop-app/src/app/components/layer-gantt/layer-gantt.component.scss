@@ -1,4 +1,10 @@
 :host {
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
+  padding-right: 1rem;
+}
+.scrubber-container {
+  margin-left: 200px;
+  position: relative;
 }

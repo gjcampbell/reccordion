@@ -2,9 +2,9 @@ import { Component, Input } from '@angular/core';
 import { EffectLayer } from 'app/services/effects.models';
 import { CommentLayer } from 'app/services/graphics.models';
 import { WebmBlobSeriesLayer } from 'app/services/renderer.service';
-import { IVideoLayer } from 'app/services/video.models';
+import { FrameSeriesLayer, IVideoLayer } from 'app/services/video.models';
 import { PlayerCanvasModel } from '../player-canvas.model';
-import { EffectGanttRow, GanttRow, ShapeGanttRow, VideoGanttRow } from './gantt-row.component';
+import { EffectGanttRow, FrameSeriesGanttRow, GanttRow, ShapeGanttRow, VideoGanttRow } from './gantt-row.component';
 
 @Component({
   selector: 'app-layer-gantt',
@@ -28,6 +28,8 @@ export class LayerGanttComponent {
   private createGanttRowModel(layer: IVideoLayer) {
     if (layer instanceof WebmBlobSeriesLayer) {
       return new VideoGanttRow(layer);
+    } else if (layer instanceof FrameSeriesLayer) {
+      return new FrameSeriesGanttRow(layer);
     } else if (layer instanceof EffectLayer) {
       return new EffectGanttRow(layer);
     } else if (layer instanceof CommentLayer) {

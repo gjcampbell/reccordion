@@ -166,4 +166,8 @@ export class WebmBlobSeriesLayer implements IBaseVideoLayer {
       return await handleFrame(time);
     }, 2);
   }
+
+  public async addVideo(blob: Blob, durationMs: number, startMs: number) {
+    this.ranges.addVideo(blob, durationMs);
+  }
 }
