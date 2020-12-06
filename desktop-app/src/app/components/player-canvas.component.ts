@@ -90,8 +90,8 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
 
   private startCanvas() {
     this.zone.runOutsideAngular(() => {
-      const redraw = () => {
-        this.draw();
+      const redraw = async () => {
+        await this.draw();
         if (!this.destroyed) {
           window.requestAnimationFrame(redraw);
         }
@@ -100,13 +100,13 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private draw() {
+  private async draw() {
     const { ctx, layers, video } = this.model;
     ctx.save();
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     ctx.clearRect(0, 0, 2000, 2000);
     for (const layer of layers) {
-      layer.drawFrame(video.getCurrTimeMs(), ctx);
+      await layer.drawFrame(video.getCurrTimeMs(), ctx);
     }
     ctx.restore();
   }

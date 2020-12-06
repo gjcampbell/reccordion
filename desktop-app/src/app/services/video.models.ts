@@ -205,39 +205,165 @@ export class TimeIterator {
   }
 }
 
+/**
+ * createImageBitmap can't keep up with request animation from
+ */
+export class BitmapFrameCache implements IFrameCache {
+  private cache = new Map<number, ImageBitmap>();
+  private lastIndex = -1;
+  private maxCached = 2;
+  private frames: Blob[];
+
+  constructor() {}
+  public load(frames: Blob[]) {
+    this.frames = frames;
+    return this;
+  }
+  public async getFrame(index: number) {
+    if (this.clearFor(index)) {
+      await this.cacheFor(index);
+    }
+    return this.cache.get(index);
+  }
+  private clearFor(index: number) {
+    if (this.lastIndex === index) {
+      return false;
+    } else {
+      const end = Math.min(this.lastIndex + this.maxCached, index);
+      for (let i = this.lastIndex; i < end; i++) {
+        this.cache.delete(i);
+      }
+      return true;
+    }
+  }
+  private async cacheFor(index: number) {
+    this.lastIndex = index;
+    await this.cacheImage(index);
+    const max = Math.min(index + this.maxCached, this.frames.length - 1);
+    for (let i = index + 1; i < max; i++) {
+      this.cacheImage(index);
+    }
+  }
+  private async cacheImage(index: number) {
+    if (!this.cache.has(index)) {
+      const frame = this.frames[index],
+        image = await createImageBitmap(frame);
+
+      this.cache.set(index, image);
+    }
+  }
+}
+
+/**
+ * Low memory usage
+ * Profiler during play shows that every frame does a decode
+ * on the image, each taking 10ms for 1300x1000 size images
+ * CPU idle 4sec out of 7, time painting 1900ms
+ * Smooth tho
+ */
+export class HtmlImgFrameCache implements IFrameCache {
+  private imgs: HTMLImageElement[];
+  public load(frames: Blob[]): IFrameCache {
+    this.imgs = frames.map((f) => {
+      const url = URL.createObjectURL(f),
+        img = document.createElement('img');
+      img.src = url;
+      return img;
+    });
+    return this;
+  }
+  public async getFrame(index: number) {
+    return this.imgs[index];
+  }
+}
+
+/**
+ * Low memory usage, profiler during play shows minimal activity
+ * CPU idle 7.7sec out of 9, time paiting 100ms
+ * Smooth
+ */
+export class OffscreenCanvasFrameCache implements IFrameCache {
+  private canvases: OffscreenCanvas[] = [];
+  private preload: Promise<any>;
+  public load(frames: Blob[]): IFrameCache {
+    this.loadCanvases(frames);
+    return this;
+  }
+  private loadCanvases(frames: Blob[]) {
+    const loader = (frame: Blob, index: number, resolver: () => void) => {
+        const url = URL.createObjectURL(frame),
+          img = document.createElement('img');
+
+        img.onload = () => {
+          const canvas = new OffscreenCanvas(img.naturalWidth, img.naturalHeight),
+            ctx = canvas.getContext('2d');
+
+          ctx.drawImage(img, 0, 0);
+          this.canvases[index] = canvas;
+          resolver();
+        };
+
+        img.src = url;
+      },
+      loaderPromise = (frame: Blob, index: number) => new Promise((resolve) => loader(frame, index, resolve));
+
+    this.preload = Promise.all(frames.map(loaderPromise));
+  }
+  public async getFrame(index: number) {
+    await this.preload;
+    return this.canvases[index];
+  }
+}
+
+interface IFrameCache {
+  load(frames: Blob[]): IFrameCache;
+  getFrame(index: number): Promise<ImageBitmap | HTMLImageElement | OffscreenCanvas>;
+}
+
 export class FrameSeries {
   private durationMs: number;
-  private frames: ImageBitmap[] = [];
+  private frameCache: IFrameCache;
+  private frameCount: number;
+  private frameDurationMs: number;
   public speedBoost: number = 1;
   public offsetMs = 0;
   public lengthMs: number;
+
   public get endMs() {
     return this.startMs - this.offsetMs + this.lengthMs;
   }
   constructor(frames: Blob[], private fps: number, public startMs: number) {
-    this.loadFrames(frames);
-    this.durationMs = frames.length * this.fps;
+    this.frameDurationMs = 1000 / this.fps;
+    this.frameCount = frames.length;
+    this.durationMs = this.frameCount * this.frameDurationMs;
     this.lengthMs = this.durationMs;
+    this.frameCache = new OffscreenCanvasFrameCache().load(frames);
   }
 
-  public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
+  public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D, width: number, height: number) {
     const startMs = this.startMs - this.offsetMs,
       endMs = this.startMs - this.offsetMs + this.lengthMs;
     if (startMs <= millisecond && endMs >= millisecond) {
-      const frameIdxOffset = this.offsetMs / this.fps,
-        frameIdx = (millisecond - startMs) / this.fps + frameIdxOffset,
-        frame = this.frames[Math.min(0, Math.max(this.frames.length - 1, Math.floor(frameIdx)))];
+      const frameIdxOffset = this.offsetMs / this.frameDurationMs,
+        frameIdx = (millisecond - startMs) / this.frameDurationMs + frameIdxOffset,
+        legitIndex = Math.max(0, Math.min(this.frameCount - 1, Math.floor(frameIdx))),
+        frame = await this.frameCache.getFrame(legitIndex),
+        scale = Math.min(width / frame.width, height / frame.height),
+        w = frame.width * scale,
+        h = frame.height * scale,
+        x = (width - w) / 2,
+        y = (height - h) / 2;
 
-      ctx.drawImage(frame, 0, 0);
+      ctx.drawImage(frame, x, y, w, h);
     }
   }
   public getOriginalDuration() {
     return this.durationMs;
   }
   private async loadFrames(frames: Blob[]) {
-    for (const item of frames) {
-      this.frames.push(await createImageBitmap(item));
-    }
+    // this consumes insane memory
+    const allFrames: ImageBitmap[] = [];
+    await Promise.all(frames.map(async (f) => allFrames.push(await createImageBitmap(f))));
   }
 }
 
@@ -285,7 +411,7 @@ export class FrameSeriesLayer implements IBaseVideoLayer {
   }
   public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {
     for (const series of this.seriesSets) {
-      series.drawFrame(millisecond, ctx);
+      await series.drawFrame(millisecond, ctx, this.w, this.h);
     }
   }
   public async addVideo(blob: Blob, durationMs: number, startMs: number) {
