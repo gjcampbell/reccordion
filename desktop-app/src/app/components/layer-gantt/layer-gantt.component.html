@@ -1,5 +1,16 @@
-<div class="scrubber-container">
-  <app-scrubber></app-scrubber>
+<div class="toolbar">
+  <div class="buttons">
+    <button mat-icon-button class="play" color="accent" (click)="togglePlay()">
+      <i
+        class="fa fa-fw"
+        [class.fa-play]="!canvasModel.video.isPlaying()"
+        [class.fa-pause]="canvasModel.video.isPlaying()"
+      ></i>
+    </button>
+  </div>
+  <div class="scrubber-container">
+    <app-scrubber></app-scrubber>
+  </div>
 </div>
 <div class="layers" *ngFor="let layer of canvasModel.layers">
   <app-gantt-row [model]="getLayerModel(layer)"></app-gantt-row>

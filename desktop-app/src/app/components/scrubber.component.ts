@@ -1,5 +1,4 @@
-import { Component, ElementRef, Input, ViewChild } from '@angular/core';
-import { IVideoLayer, IBaseVideoLayer } from 'app/services/video.models';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { PlayerCanvasModel } from './player-canvas.model';
 
 @Component({
@@ -53,6 +52,7 @@ import { PlayerCanvasModel } from './player-canvas.model';
         left: -5.5px;
         user-select: none;
         cursor: ew-resize;
+        outline: none;
       }
       .c-window::after {
         content: '';

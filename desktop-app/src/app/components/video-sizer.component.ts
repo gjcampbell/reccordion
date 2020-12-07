@@ -22,8 +22,9 @@ import { AfterViewInit, Component, EventEmitter, HostBinding, Input, Output } fr
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #0004;
-        padding: 18px;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
       }
       .content {
         position: relative;
@@ -32,6 +33,7 @@ import { AfterViewInit, Component, EventEmitter, HostBinding, Input, Output } fr
         justify-content: center;
         background: #000;
         box-shadow: 0 0 8px #000;
+        margin: 20px auto;
       }
       .edge {
         position: absolute;

@@ -67,14 +67,7 @@ import { Decoder, Reader, tools } from 'ts-ebml';
         flex-direction: column;
         height: 100%;
         overflow: hidden;
-      }
-      app-player {
-        display: block;
-        flex: 1 1 100%;
-      }
-      app-scrubber {
-        display: block;
-        flex: 1 1 auto;
+        background: #0004;
       }
     `,
   ],

@@ -40,15 +40,21 @@ import { PlayerCanvasModel } from './player-canvas.model';
     </app-video-sizer>
     <div class="play-bar">
       <ng-container *ngIf="!isLive">
-        <button mat-icon-button class="play" color="accent" (click)="togglePlay()">
-          <i class="fa fa-fw" [class.fa-play]="videoEl.paused" [class.fa-pause]="!videoEl.paused"></i>
-        </button>
         <app-layer-gantt></app-layer-gantt>
       </ng-container>
     </div>
   `,
   styles: [
     `
+      :host {
+        display: grid;
+        flex: 1 1 100%;
+        justify-conent: stretch;
+        justify-items: center;
+        grid-template-rows: 1fr min-content;
+        height: 100%;
+        overflow: hidden;
+      }
       .display-preview {
         display: unset;
       }
@@ -87,8 +93,11 @@ import { PlayerCanvasModel } from './player-canvas.model';
         transition: none !important;
       }
       .play-bar {
-        display: flex;
-        align-items: stretch;
+        padding: 0 1rem;
+        background: #999;
+        box-shadow: 0 0 8px #000;
+        box-sizing: border-box;
+        width: 100%;
       }
       .time {
         min-width: 4rem;

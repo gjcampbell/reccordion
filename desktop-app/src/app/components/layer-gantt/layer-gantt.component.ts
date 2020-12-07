@@ -16,6 +16,14 @@ export class LayerGanttComponent {
 
   constructor(protected readonly canvasModel: PlayerCanvasModel) {}
 
+  protected togglePlay() {
+    if (!this.canvasModel.video.isPlaying()) {
+      this.canvasModel.video.play();
+    } else {
+      this.canvasModel.video.pause();
+    }
+  }
+
   protected getLayerModel(layer: IVideoLayer) {
     let result = this.layerModelLookup.get(layer);
     if (!result) {

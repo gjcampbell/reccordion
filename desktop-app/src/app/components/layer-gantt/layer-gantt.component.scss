@@ -2,9 +2,17 @@
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-  padding-right: 1rem;
+  background: #e4e4e4;
+  display: block;
+}
+.toolbar {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  .buttons {
+    background: #0002;
+  }
 }
 .scrubber-container {
-  margin-left: 200px;
   position: relative;
+  background: #0001;
 }

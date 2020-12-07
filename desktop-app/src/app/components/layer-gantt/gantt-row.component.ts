@@ -5,6 +5,7 @@ import { Effect, EffectLayer } from 'app/services/effects.models';
 import { FrameSeries, FrameSeriesLayer, IBaseVideoLayer, IVideoLayer, VideoTimeRange } from 'app/services/video.models';
 import { PlayerCanvasModel } from '../player-canvas.model';
 import { basename } from 'path';
+import { isNgTemplate } from '@angular/compiler';
 
 export interface GanttRow<ItemType> {
   canReorderItems: boolean;
@@ -17,6 +18,10 @@ export interface GanttRow<ItemType> {
   setEndMs(item: ItemType, value: number): void;
   getLabel(item: ItemType): string;
   getItemType(item: ItemType): string;
+  getBg(item: ItemType): string;
+  getFg(item: ItemType): string;
+  getBorder(item: ItemType): string;
+  getLineHeight(item: ItemType): string;
 }
 
 export abstract class BaseGanttRow<T extends { startMs: number; endMs: number }> implements GanttRow<T> {
@@ -38,6 +43,18 @@ export abstract class BaseGanttRow<T extends { startMs: number; endMs: number }>
   }
   public setEndMs(item: T, value: number) {
     item.endMs = value;
+  }
+  public getBg(item: T) {
+    return '#B48D40';
+  }
+  public getFg(item: T) {
+    return '#000';
+  }
+  public getBorder(item: T) {
+    return 'none';
+  }
+  public getLineHeight(item: T) {
+    return '25px';
   }
 }
 
@@ -119,6 +136,18 @@ export class ShapeGanttRow extends BaseGanttRow<IComment> {
   }
   public getItemType(item: IComment) {
     return item.text ? 'text' : 'shape';
+  }
+  public getBg(item: IComment) {
+    return item.background;
+  }
+  public getFg(item: IComment) {
+    return item.fillColor;
+  }
+  public getBorder(item: IComment) {
+    return `solid ${item.borderWidth}px ${item.borderColor}`;
+  }
+  public getLineHeight(item: IComment) {
+    return `calc(25px - ${item.borderWidth * 2}px)`;
   }
 }
 
@@ -243,6 +272,10 @@ export class GanttRowComponent {
     return {
       left: `${left * 100}%`,
       width: `${width * 100}%`,
+      background: this.model.getBg(item),
+      color: this.model.getFg(item),
+      border: this.model.getBorder(item),
+      lineHeight: this.model.getLineHeight(item),
     };
   }
 

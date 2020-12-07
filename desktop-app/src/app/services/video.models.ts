@@ -278,7 +278,7 @@ export class HtmlImgFrameCache implements IFrameCache {
 }
 
 /**
- * Low memory usage, profiler during play shows minimal activity
+ * High memory usage, profiler during play shows minimal activity
  * CPU idle 7.7sec out of 9, time paiting 100ms
  * Smooth
  */
@@ -337,7 +337,7 @@ export class FrameSeries {
     this.frameCount = frames.length;
     this.durationMs = this.frameCount * this.frameDurationMs;
     this.lengthMs = this.durationMs;
-    this.frameCache = new OffscreenCanvasFrameCache().load(frames);
+    this.frameCache = new HtmlImgFrameCache().load(frames);
   }
 
   public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D, width: number, height: number) {
