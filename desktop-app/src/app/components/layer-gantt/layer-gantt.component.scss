@@ -2,8 +2,15 @@
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-  background: #e4e4e4;
   display: block;
+}
+.buttons-container {
+  display: grid;
+  grid-template-columns: 1fr min-content;
+  align-items: center;
+}
+.time-label {
+  text-align: right;
 }
 .toolbar {
   display: grid;

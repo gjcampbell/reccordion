@@ -1,12 +1,18 @@
 <div class="toolbar">
-  <div class="buttons">
-    <button mat-icon-button class="play" color="accent" (click)="togglePlay()">
-      <i
-        class="fa fa-fw"
-        [class.fa-play]="!canvasModel.video.isPlaying()"
-        [class.fa-pause]="canvasModel.video.isPlaying()"
-      ></i>
-    </button>
+  <div class="buttons-container">
+    <div class="time-label">
+      <div #timeLabel class="time"></div>
+      <div #totalLabel class="total"></div>
+    </div>
+    <div class="buttons">
+      <button mat-icon-button class="play" color="accent" (click)="togglePlay()">
+        <i
+          class="fa fa-fw"
+          [class.fa-play]="!canvasModel.video.isPlaying()"
+          [class.fa-pause]="canvasModel.video.isPlaying()"
+        ></i>
+      </button>
+    </div>
   </div>
   <div class="scrubber-container">
     <app-scrubber></app-scrubber>

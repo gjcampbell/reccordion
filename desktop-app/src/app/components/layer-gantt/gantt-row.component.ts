@@ -188,10 +188,12 @@ export class GanttRowComponent {
         const delt = evt.screenX - init.mse.x,
           newX = Math.min(maxX, Math.max(0, delt + init.item.x)),
           startMs = (newX / init.containerW) * init.durMs,
-          endMs = startMs + widthMs;
+          snappedStartMs = this.canvasModel.snapMsToFrame(startMs),
+          endMs = startMs + widthMs,
+          snappedEndMs = this.canvasModel.snapMsToFrame(endMs);
 
-        this.model.setStartMs(item, startMs);
-        this.model.setEndMs(item, endMs);
+        this.model.setStartMs(item, snappedStartMs);
+        this.model.setEndMs(item, snappedEndMs);
       },
       mouseup = () => {
         window.removeEventListener('mouseup', mouseup);
@@ -208,9 +210,10 @@ export class GanttRowComponent {
       mousemove = (evt: MouseEvent) => {
         const delt = evt.screenX - init.mse.x,
           newX = Math.min(maxX, Math.max(0, delt + init.item.x)),
-          startMs = (newX / init.containerW) * init.durMs;
+          startMs = (newX / init.containerW) * init.durMs,
+          snappedMs = this.canvasModel.snapMsToFrame(startMs);
 
-        this.model.setStartMs(item, startMs);
+        this.model.setStartMs(item, snappedMs);
       },
       mouseup = () => {
         window.removeEventListener('mouseup', mouseup);
@@ -228,9 +231,10 @@ export class GanttRowComponent {
       mousemove = (evt: MouseEvent) => {
         const delt = evt.screenX - init.mse.x,
           newW = Math.min(maxW, Math.max(0, delt + init.item.w)),
-          endMs = (newW / init.containerW) * init.durMs + init.startMs;
+          endMs = (newW / init.containerW) * init.durMs + init.startMs,
+          snappedMs = this.canvasModel.snapMsToFrame(endMs);
 
-        this.model.setEndMs(item, endMs);
+        this.model.setEndMs(item, snappedMs);
       },
       mouseup = () => {
         window.removeEventListener('mouseup', mouseup);
@@ -274,7 +278,7 @@ export class GanttRowComponent {
       width: `${width * 100}%`,
       background: this.model.getBg(item),
       color: this.model.getFg(item),
-      border: this.model.getBorder(item),
+      //border: this.model.getBorder(item),
       lineHeight: this.model.getLineHeight(item),
     };
   }

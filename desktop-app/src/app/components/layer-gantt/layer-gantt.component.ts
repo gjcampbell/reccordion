@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { EffectLayer } from 'app/services/effects.models';
+import { FastNgUpdateService } from 'app/services/fast-ng-update.service';
 import { CommentLayer } from 'app/services/graphics.models';
 import { WebmBlobSeriesLayer } from 'app/services/renderer.service';
 import { FrameSeriesLayer, IVideoLayer } from 'app/services/video.models';
@@ -11,10 +12,43 @@ import { EffectGanttRow, FrameSeriesGanttRow, GanttRow, ShapeGanttRow, VideoGant
   templateUrl: './layer-gantt.component.html',
   styleUrls: ['./layer-gantt.component.scss'],
 })
-export class LayerGanttComponent {
+export class LayerGanttComponent implements OnDestroy, AfterViewInit {
   private layerModelLookup = new Map<IVideoLayer, GanttRow<any>>();
+  private disposer: () => void;
 
-  constructor(protected readonly canvasModel: PlayerCanvasModel) {}
+  @ViewChild('timeLabel', { static: true })
+  protected timeLabel: ElementRef<HTMLDivElement>;
+  @ViewChild('totalLabel', { static: true })
+  protected totalLabel: ElementRef<HTMLDivElement>;
+
+  constructor(protected readonly canvasModel: PlayerCanvasModel, private readonly updater: FastNgUpdateService) {}
+
+  ngOnDestroy() {
+    this.disposer();
+  }
+
+  ngAfterViewInit() {
+    this.updater.addUpdateListener(() => this.updateLabels());
+  }
+
+  private updateLabels() {
+    this.updateFrameLabel();
+    this.updateTimeLabel();
+  }
+
+  private updateFrameLabel() {
+    if (this.totalLabel.nativeElement) {
+      const time = this.canvasModel.video.getDurationMs();
+      this.totalLabel.nativeElement.textContent = this.canvasModel.formatAsFrame(time);
+    }
+  }
+
+  private updateTimeLabel() {
+    if (this.timeLabel.nativeElement) {
+      const time = this.canvasModel.video.getCurrTimeMs();
+      this.timeLabel.nativeElement.textContent = this.canvasModel.formatAsFrame(time);
+    }
+  }
 
   protected togglePlay() {
     if (!this.canvasModel.video.isPlaying()) {

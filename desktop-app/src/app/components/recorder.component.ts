@@ -51,6 +51,7 @@ import { Decoder, Reader, tools } from 'ts-ebml';
         [capturer]="capturer"
         [layers]="layers"
         [video]="videoLayer"
+        [fps]="25"
         #player
       ></app-player>
     </ng-container>
@@ -67,7 +68,7 @@ import { Decoder, Reader, tools } from 'ts-ebml';
         flex-direction: column;
         height: 100%;
         overflow: hidden;
-        background: #0004;
+        background: #000d;
       }
     `,
   ],
@@ -82,6 +83,7 @@ export class RecorderComponent implements AfterViewInit {
   private textLayer = new CommentLayer();
   public layers: IVideoLayer[] = [];
   public exporting = false;
+  public fps = 25;
 
   constructor(
     private readonly recorder: RecordingService,

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, Output, ViewChild } from '@angular/core';
-import { IVideoLayer, ICapturer, IBaseVideoLayer } from 'app/services/video.models';
+import { IVideoLayer, ICapturer, IBaseVideoLayer, IVideo } from 'app/services/video.models';
 import { PlayerCanvasComponent } from './player-canvas.component';
 import { PlayerCanvasModel } from './player-canvas.model';
 
@@ -94,8 +94,9 @@ import { PlayerCanvasModel } from './player-canvas.model';
       }
       .play-bar {
         padding: 0 1rem;
-        background: #999;
-        box-shadow: 0 0 8px #000;
+        background: #fff3;
+        box-shadow: 0 0 8px #0007;
+        border-top: solid 1px #fff2;
         box-sizing: border-box;
         width: 100%;
       }
@@ -142,6 +143,11 @@ export class PlayerComponent implements AfterViewInit {
   }
 
   @Input()
+  public set fps(value: number) {
+    this.model.fps = value;
+  }
+
+  @Input()
   public set video(value: IBaseVideoLayer) {
     this.model.video = value;
   }
@@ -181,16 +187,13 @@ export class PlayerComponent implements AfterViewInit {
   private watchTime() {
     this.liveTime = '0:00.0';
     this.videoEl.addEventListener('timeupdate', () => {
-      const time = this.isLive ? this.capturer.getDuration() / 1000 : this.videoEl.currentTime;
+      const time = this.isLive ? this.capturer.getDuration() : this.videoEl.currentTime;
       this.liveTime = this.formatTime(time, 1);
     });
   }
 
   private formatTime(time: number, mills: number = 0) {
-    const seconds = (time % 60).toFixed(mills).padStart(mills > 0 ? mills + 3 : 2, '0'),
-      minutes = Math.floor(time / 60);
-
-    return `${minutes}:${seconds}`;
+    return this.model.formatAsTime(time, mills);
   }
 
   public getTimeLabel(mills: number = 0) {

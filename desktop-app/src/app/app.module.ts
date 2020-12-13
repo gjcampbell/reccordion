@@ -13,6 +13,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { ConverterService } from './services/converter.service';
 import { ElectronService } from './services/electron.service';
+import { FastNgUpdateService } from './services/fast-ng-update.service';
 import { RecordingService } from './services/recording.service';
 import { RendererService, ReqRendererService } from './services/renderer.service';
 
@@ -25,7 +26,7 @@ import { CanvasTextEditorComponent } from './components/canvas-text-editor/canva
 import { PlayerComponent } from './components/player.component';
 import { VideoSizerComponent } from './components/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
-import { ScrubberComponent } from './components/scrubber.component';
+import { ScrubberComponent } from './components/layer-gantt/scrubber.component';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -75,7 +76,14 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
       },
     }),
   ],
-  providers: [ConverterService, ElectronService, RecordingService, ReqRendererService, RendererService],
+  providers: [
+    ConverterService,
+    ElectronService,
+    FastNgUpdateService,
+    RecordingService,
+    ReqRendererService,
+    RendererService,
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

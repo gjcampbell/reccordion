@@ -6,10 +6,10 @@ import { AfterViewInit, Component, EventEmitter, HostBinding, Input, Output } fr
     <div class="content" [class.resizing]="resizing" [style.width.px]="width" [style.height.px]="height">
       <ng-content></ng-content>
       <div class="height edge">
-        <span>{{ height }}px</span>
+        <span>{{ height * pixelRatio }}px</span>
       </div>
       <div class="width edge">
-        <span>{{ width }}px</span>
+        <span>{{ width * pixelRatio }}px</span>
       </div>
       <div class="handle" (mousedown)="handleMousedown($event)">
         <i class="fa fa-arrows-alt-v"></i>
@@ -101,6 +101,10 @@ export class VideoSizerComponent {
   public minWidth = 50;
   @Input()
   public minHeight = 50;
+
+  protected get pixelRatio() {
+    return window.devicePixelRatio;
+  }
 
   public resizing = false;
 

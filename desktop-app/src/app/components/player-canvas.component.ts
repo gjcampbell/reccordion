@@ -9,7 +9,6 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import { IBaseVideoLayer, IVideoLayer } from 'app/services/video.models';
 import { PlayerCanvasModel } from './player-canvas.model';
 
 @Component({
