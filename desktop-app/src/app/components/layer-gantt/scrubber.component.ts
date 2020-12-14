@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, NgZone, HostListener } from '@angular/core';
 import { FastNgUpdateService } from 'app/services/fast-ng-update.service';
 import { PlayerCanvasModel } from '../player-canvas.model';
 
@@ -6,7 +6,7 @@ import { PlayerCanvasModel } from '../player-canvas.model';
   selector: 'app-scrubber',
   template: `
     <div class="margin">
-      <div class="container" #container>
+      <div class="container" #container [style]="getSeekbarBg()">
         <div #bar class="bar" [style.left]="getBarPos()" (mousedown)="handleBarMouseDown($event)">
           <div class="marker"></div>
           <div class="sliver" tabindex="0"></div>
@@ -20,6 +20,9 @@ import { PlayerCanvasModel } from '../player-canvas.model';
 export class ScrubberComponent implements AfterViewInit, OnDestroy {
   protected hpadding = 16;
   private disposer: () => void;
+  private expectedDurMs = 0;
+  private expectedWidth = 0;
+  private cachedBg: { background: string };
 
   public get layers() {
     return this.canvasModel.layers;
@@ -35,7 +38,11 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
   @ViewChild('container', { static: true })
   protected container: ElementRef<HTMLDivElement>;
 
-  constructor(private readonly canvasModel: PlayerCanvasModel, private readonly updater: FastNgUpdateService) {}
+  constructor(
+    private readonly canvasModel: PlayerCanvasModel,
+    private readonly updater: FastNgUpdateService,
+    private readonly zone: NgZone
+  ) {}
 
   ngOnDestroy() {
     this.disposer();
@@ -45,10 +52,41 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
     this.disposer = this.updater.addUpdateListener(() => this.updateBarPos());
   }
 
+  @HostListener('window:resize')
+  public handleResize() {
+    this.expectedWidth = 0;
+  }
+
   private updateBarPos() {
     if (this.bar && this.bar.nativeElement) {
       this.bar.nativeElement.style.left = this.getBarPos();
     }
+  }
+
+  private getContainerWidth() {
+    if (this.expectedWidth === 0 && this.container.nativeElement) {
+      const bounds = this.container.nativeElement.getBoundingClientRect();
+      this.expectedWidth = bounds.width;
+    }
+    return this.expectedWidth;
+  }
+
+  protected getSeekbarBg() {
+    if (this.expectedDurMs !== this.video.getDurationMs() || this.expectedWidth === 0) {
+      const width = this.getContainerWidth(),
+        durMs = this.video.getDurationMs(),
+        frames = this.canvasModel.getFrameCount(),
+        pxPerFrame = width / frames,
+        minPxPerFrame = 5,
+        adjustedPxPerFrame =
+          pxPerFrame > minPxPerFrame ? pxPerFrame : Math.ceil(minPxPerFrame / pxPerFrame) * pxPerFrame;
+
+      this.cachedBg = {
+        background: `repeating-linear-gradient(90deg, #666, transparent 1px, transparent ${adjustedPxPerFrame}px)`,
+      };
+      this.expectedDurMs = durMs;
+    }
+    return this.cachedBg;
   }
 
   protected getBarPos() {
@@ -57,7 +95,7 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
   }
 
   protected handleSeekbarClick(evt: MouseEvent & { target: HTMLDivElement }) {
-    const { width } = evt.target.getBoundingClientRect(),
+    const width = this.getContainerWidth(),
       x = evt.offsetX,
       dur = this.video.getDurationMs(),
       seekPct = Math.max(0, Math.min(1, x / width)),
@@ -67,7 +105,7 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
   }
 
   protected handleBarMouseDown(evt: MouseEvent) {
-    const { width } = this.container.nativeElement.getBoundingClientRect(),
+    const width = this.getContainerWidth(),
       startX = evt.pageX,
       dur = this.video.getDurationMs(),
       startPct = this.video.getCurrTimeMs() / this.video.getDurationMs(),

@@ -12,6 +12,7 @@ import {
   IBaseVideoLayer,
   formatTime,
   FrameSeriesLayer,
+  snapToFrameMs,
 } from 'app/services/video.models';
 import { RecordingService } from '../../services/recording.service';
 import { PlayerComponent } from '../player.component';
@@ -163,7 +164,8 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
 
   private addShape(comment: Partial<IComment>) {
     const max = this.videoLayer.getDurationMs(),
-      startMs = Math.min(this.videoLayer.getCurrTimeMs(), max - 1000),
+      currentMs = snapToFrameMs(this.videoLayer.getCurrTimeMs(), this.fps),
+      startMs = Math.min(currentMs, max - 1000),
       endMs = Math.min(startMs + 3000, max);
     this.textLayer.addText({
       ...comment,

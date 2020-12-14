@@ -1,14 +1,18 @@
 import { IFrameExtractor } from './interfaces';
 
 export const formatTime = (timeMs: number, decimals = 2) => {
-  const mills = timeMs > 0 ? '.' + timeMs.toString().slice(-3, -3 + decimals) : '',
-    seconds = Math.floor((timeMs / 1000) % 60)
-      .toFixed(0)
-      .padStart(2, '0'),
-    minutes = Math.floor(timeMs / 60000);
+    const mills = timeMs > 0 ? '.' + timeMs.toString().slice(-3, -3 + decimals) : '',
+      seconds = Math.floor((timeMs / 1000) % 60)
+        .toFixed(0)
+        .padStart(2, '0'),
+      minutes = Math.floor(timeMs / 60000);
 
-  return `${minutes}:${seconds}${mills}`;
-};
+    return `${minutes}:${seconds}${mills}`;
+  },
+  snapToFrameMs = (mills: number, fps: number) => {
+    const frameDurMs = 1000 / fps;
+    return Math.floor(mills / frameDurMs) * frameDurMs;
+  };
 
 export type VideoEl = HTMLVideoElement & {
   requestVideoFrameCallback: (callback: (now: number, { mediaTime: number }) => void) => void;
@@ -351,8 +355,8 @@ export class FrameSeries {
   }
 
   public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D, width: number, height: number) {
-    const startMs = this.startMs - this.offsetMs,
-      endMs = this.startMs - this.offsetMs + this.lengthMs;
+    const startMs = this.startMs,
+      endMs = this.endMs;
     if (startMs <= millisecond && endMs >= millisecond) {
       const frameIdxOffset = this.offsetMs / this.frameDurationMs,
         frameIdx = (millisecond - startMs) / this.frameDurationMs + frameIdxOffset,

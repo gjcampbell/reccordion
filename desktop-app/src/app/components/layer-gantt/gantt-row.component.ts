@@ -14,6 +14,8 @@ export interface GanttRow<ItemType> {
   getItems(): ItemType[];
   getStartMs(item: ItemType): number;
   setStartMs(item: ItemType, value: number): void;
+  setOffsetMs(item: ItemType, value: number): void;
+  setLengthMs(item: ItemType, value: number): void;
   getEndMs(item: ItemType): number;
   setEndMs(item: ItemType, value: number): void;
   getLabel(item: ItemType): string;
@@ -37,6 +39,12 @@ export abstract class BaseGanttRow<T extends { startMs: number; endMs: number }>
   }
   public setStartMs(item: T, value: number) {
     item.startMs = value;
+  }
+  public setOffsetMs(item: T, value: number) {
+    item.startMs = value;
+  }
+  public setLengthMs(item: T, value: number) {
+    item.endMs = value;
   }
   public getEndMs(item: T) {
     return item.endMs;
@@ -113,8 +121,21 @@ export class FrameSeriesGanttRow extends BaseGanttRow<FrameSeries> {
   public getItemType(item: FrameSeries) {
     return 'recording';
   }
+  public setLengthMs(item: FrameSeries, value: number) {
+    item.lengthMs = value - item.startMs + item.offsetMs;
+  }
   public setEndMs(item: FrameSeries, value: number) {
-    //item.endMs = value;
+    // noop
+  }
+  public setOffsetMs(item: FrameSeries, value: number) {
+    const newOffset = value - item.startMs + item.offsetMs,
+      offsetDelt = newOffset - item.offsetMs,
+      safeDelt =
+        item.offsetMs + offsetDelt > 0 || item.lengthMs - offsetDelt > item.getOriginalDuration()
+          ? offsetDelt
+          : item.offsetMs;
+    item.offsetMs += safeDelt;
+    item.startMs += safeDelt;
   }
 }
 
@@ -213,7 +234,7 @@ export class GanttRowComponent {
           startMs = (newX / init.containerW) * init.durMs,
           snappedMs = this.canvasModel.snapMsToFrame(startMs);
 
-        this.model.setStartMs(item, snappedMs);
+        this.model.setOffsetMs(item, snappedMs);
       },
       mouseup = () => {
         window.removeEventListener('mouseup', mouseup);
@@ -234,7 +255,7 @@ export class GanttRowComponent {
           endMs = (newW / init.containerW) * init.durMs + init.startMs,
           snappedMs = this.canvasModel.snapMsToFrame(endMs);
 
-        this.model.setEndMs(item, snappedMs);
+        this.model.setLengthMs(item, snappedMs);
       },
       mouseup = () => {
         window.removeEventListener('mouseup', mouseup);

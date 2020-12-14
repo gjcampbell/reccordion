@@ -88,7 +88,7 @@ export class ShapeService {
       case 'triangle-left':
         return this.createPolygon(3, Math.PI * 1.5, bounds);
       case 'arrow-right':
-        return this.createArrow(0, 0.8, 0.15, bounds);
+        return this.createArrow(0, 0.8, 0.25, bounds);
     }
     return [];
   }
