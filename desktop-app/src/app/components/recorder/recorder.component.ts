@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, ViewChild, OnDestroy } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ConverterService } from 'app/services/converter.service';
 import { ElectronService } from 'app/services/electron.service';
-import { CommentLayer } from 'app/services/graphics.models';
+import { CommentLayer, IComment } from 'app/services/graphics.models';
 import { ReqRendererService, WebmBlobSeriesLayer } from 'app/services/renderer.service';
 import {
   ICapturer,
@@ -10,108 +10,165 @@ import {
   ICapturable,
   IVideo,
   IBaseVideoLayer,
+  formatTime,
   FrameSeriesLayer,
 } from 'app/services/video.models';
-import { RecordingService } from '../services/recording.service';
-import { PlayerComponent } from './player.component';
-import { Decoder, Reader, tools } from 'ts-ebml';
+import { RecordingService } from '../../services/recording.service';
+import { PlayerComponent } from '../player.component';
+import { FastNgUpdateService } from 'app/services/fast-ng-update.service';
+import {
+  rectOption,
+  circleOption,
+  starOption,
+  arrowOption,
+  triangleOption,
+  ShapeService,
+} from 'app/services/shape.service';
 
 @Component({
   selector: 'app-recorder',
-  template: `
-    <ng-container class="video" *ngIf="!exporting">
-      <div class="main-options">
-        <button *ngIf="canSelect()" mat-icon-button matTooltip="Start recording a Window" (click)="select()">
-          <i class="fa fa-fw fa-tv"></i>
-        </button>
-        <button *ngIf="canCapture()" matTooltip="Resume Recording" mat-icon-button (click)="capturer.capture()">
-          <i class="fa fa-fw fa-play-circle"></i>
-        </button>
-        <button *ngIf="canPause()" matTooltip="Pause Recording" mat-icon-button (click)="capturer.pause()">
-          <i class="fa fa-fw fa-pause"></i>
-        </button>
-        <button *ngIf="canStop()" matTooltip="Stop Recording" mat-icon-button (click)="stop()">
-          <i class="fa fa-fw fa-stop-circle"></i>
-        </button>
-        <button
-          *ngIf="stopped && player.videoEl.paused"
-          [matTooltip]="'Add Text at ' + player.getTimeLabel(2)"
-          mat-icon-button
-          (click)="addText()"
-        >
-          <i class="fa fa-fw fa-font"></i>
-        </button>
-        <button *ngIf="canExport()" matTooltip="Export Recording" mat-icon-button (click)="export()">
-          <i class="fa fa-fw fa-file-export"></i>
-        </button>
-      </div>
-      <app-player
-        [source]="preview"
-        (videoClicked)="togglePause()"
-        [capturer]="capturer"
-        [layers]="layers"
-        [video]="videoLayer"
-        [fps]="25"
-        #player
-      ></app-player>
-    </ng-container>
-  `,
-  styles: [
-    `
-      .main-options {
-        font-size: 2rem;
-        text-align: center;
-        flex: 0 0 auto;
-      }
-      :host {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-        background: #000d;
-      }
-    `,
-  ],
+  templateUrl: './recorder.component.html',
+  styleUrls: ['./recorder.component.scss'],
 })
-export class RecorderComponent implements AfterViewInit {
-  public capturer?: ICapturer;
-  public preview?: Blob | MediaStream;
-  @ViewChild('player')
-  public player: PlayerComponent;
-  public stopped = false;
-  protected videoLayer: IBaseVideoLayer;
+export class RecorderComponent implements AfterViewInit, OnDestroy {
   private textLayer = new CommentLayer();
-  public layers: IVideoLayer[] = [];
-  public exporting = false;
-  public fps = 25;
+  private disposer: () => void;
+  protected videoLayer: IBaseVideoLayer;
+  protected capturer?: ICapturer;
+  protected preview?: Blob | MediaStream;
+  protected stopped = false;
+  protected layers: IVideoLayer[] = [];
+  protected exporting = false;
+  protected fps = 25;
+  protected processing = false;
+  protected get isRecording() {
+    return !!this.capturer;
+  }
+  protected get isRecordingPaused() {
+    return this.capturer && !this.capturer.isRecording();
+  }
+  protected get isEmpty() {
+    return !this.capturer && this.videoLayer.isEmpty();
+  }
+  @ViewChild('player')
+  protected player: PlayerComponent;
+  @ViewChild('recordingDur')
+  protected recordingDurLabel: ElementRef<HTMLSpanElement>;
 
   constructor(
     private readonly recorder: RecordingService,
     private readonly dialog: MatDialog,
     private readonly electron: ElectronService,
-    private readonly converter: ConverterService
+    private readonly converter: ConverterService,
+    private readonly shapeService: ShapeService,
+    private readonly updater: FastNgUpdateService
   ) {
     this.videoLayer = new FrameSeriesLayer(this.converter);
     this.videoLayer.setDimensions(720, 480);
     this.layers.push(this.videoLayer, this.textLayer);
   }
 
-  public ngAfterViewInit() {}
+  public ngOnDestroy() {
+    this.disposer();
+  }
 
-  public addText() {
-    const startMs = this.videoLayer.getCurrTimeMs();
-    this.textLayer.addText({
-      startMs,
-      endMs: startMs + 5000,
+  public ngAfterViewInit() {
+    this.disposer = this.updater.addUpdateListener(() => this.updateRecordingDur());
+  }
+
+  protected addText() {
+    this.addShape({
       text: 'Some Text',
       strokeColor: '#fff',
       strokeW: 2,
+      borderColor: '#000',
+      borderWidth: 1,
       font: 'Roboto',
       align: 'center',
-      fillColor: '#fff',
-      background: '#000',
-      height: 200,
+      fillColor: '#000',
+      background: '#fff',
+      height: 50,
       width: 300,
+    });
+  }
+
+  protected addStar() {
+    this.addShape(
+      this.shapeService.createShape(starOption, {
+        fillColor: '#141518',
+        background: '#F0C600',
+        position: { x: 0, y: 0 },
+        width: 150,
+        height: 150,
+        text: '',
+      } as IComment)
+    );
+  }
+
+  protected addRect() {
+    this.addShape(
+      this.shapeService.createShape(rectOption, {
+        fillColor: '#000',
+        background: '#0000',
+        borderColor: '#000',
+        borderWidth: 4,
+        position: { x: 0, y: 0 },
+        width: 300,
+        height: 200,
+        text: '',
+      } as IComment)
+    );
+  }
+
+  protected addCircle() {
+    this.addShape(
+      this.shapeService.createShape(circleOption, {
+        fillColor: '#000',
+        background: '#0000',
+        borderColor: '#000',
+        borderWidth: 4,
+        position: { x: 0, y: 0 },
+        width: 150,
+        height: 150,
+        text: '',
+      } as IComment)
+    );
+  }
+
+  protected addArrow() {
+    this.addShape(
+      this.shapeService.createShape(arrowOption, {
+        fillColor: '#fff',
+        background: '#000',
+        position: { x: 0, y: 0 },
+        width: 100,
+        height: 50,
+        text: '',
+      } as IComment)
+    );
+  }
+
+  protected addTriangle() {
+    this.addShape(
+      this.shapeService.createShape(triangleOption, {
+        fillColor: '#141518',
+        background: '#E58000',
+        position: { x: 0, y: 0 },
+        width: 150,
+        height: 150,
+        text: '',
+      } as IComment)
+    );
+  }
+
+  private addShape(comment: Partial<IComment>) {
+    const max = this.videoLayer.getDurationMs(),
+      startMs = Math.min(this.videoLayer.getCurrTimeMs(), max - 1000),
+      endMs = Math.min(startMs + 3000, max);
+    this.textLayer.addText({
+      ...comment,
+      startMs,
+      endMs,
     });
   }
 
@@ -191,7 +248,16 @@ export class RecorderComponent implements AfterViewInit {
 
       this.preview = blob;
       this.stopped = true;
-      this.videoLayer.addVideo(blob, this.capturer.getDuration(), this.videoLayer.getDurationMs());
+      this.processing = true;
+      await this.videoLayer.addVideo(blob, this.capturer.getDuration(), this.videoLayer.getDurationMs());
+      this.processing = false;
+      this.capturer = undefined;
+    }
+  }
+
+  private updateRecordingDur() {
+    if (this.capturer && this.recordingDurLabel.nativeElement) {
+      this.recordingDurLabel.nativeElement.textContent = formatTime(this.capturer.getDuration());
     }
   }
 

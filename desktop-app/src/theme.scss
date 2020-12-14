@@ -255,3 +255,23 @@ $altTheme: mat-light-theme($theme-primary, $theme-accent, $theme-warn);
     font-family: 'Roboto';
   }
 }
+
+@mixin hover-button() {
+  transition: 0.2s;
+  &:hover {
+    background: #fdf2ff;
+    color: #8d40b4;
+  }
+}
+
+@mixin chill-text {
+  color: #dadada;
+}
+
+$tool-panel-spacing: 0.5rem;
+
+@mixin tool-panel {
+  background: #fff2;
+  box-shadow: 0 0 8px #0007;
+  border: solid 1px #fff2;
+}

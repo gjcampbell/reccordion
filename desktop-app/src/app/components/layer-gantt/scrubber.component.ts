@@ -42,7 +42,7 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.updater.addUpdateListener(() => this.updateBarPos());
+    this.disposer = this.updater.addUpdateListener(() => this.updateBarPos());
   }
 
   private updateBarPos() {

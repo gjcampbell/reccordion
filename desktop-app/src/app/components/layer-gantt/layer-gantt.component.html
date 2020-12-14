@@ -18,6 +18,8 @@
     <app-scrubber></app-scrubber>
   </div>
 </div>
-<div class="layers" *ngFor="let layer of canvasModel.layers">
-  <app-gantt-row [model]="getLayerModel(layer)"></app-gantt-row>
+<div class="layers">
+  <div class="layer" *ngFor="let layer of canvasModel.layers">
+    <app-gantt-row [model]="getLayerModel(layer)"></app-gantt-row>
+  </div>
 </div>

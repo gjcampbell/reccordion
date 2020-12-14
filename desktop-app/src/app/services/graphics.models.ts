@@ -97,7 +97,7 @@ export interface IComment {
   shadowBlur: number;
   shadowColor: string;
   shape: string;
-  shapeData: any;
+  shapeData?: { name: string; ufName: string; icon: string };
   points: ShapePoint[];
 }
 
@@ -139,7 +139,7 @@ export class CommentLayer implements IVideoLayer {
       shadowBlur: 15,
       shadowColor: '#000',
       shape: 'rect',
-      shapeData: {},
+      shapeData: undefined,
       points: [],
       ...comment,
     });

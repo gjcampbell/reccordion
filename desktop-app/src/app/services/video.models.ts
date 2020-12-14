@@ -1,5 +1,15 @@
 import { IFrameExtractor } from './interfaces';
 
+export const formatTime = (timeMs: number, decimals = 2) => {
+  const mills = timeMs > 0 ? '.' + timeMs.toString().slice(-3, -3 + decimals) : '',
+    seconds = Math.floor((timeMs / 1000) % 60)
+      .toFixed(0)
+      .padStart(2, '0'),
+    minutes = Math.floor(timeMs / 60000);
+
+  return `${minutes}:${seconds}${mills}`;
+};
+
 export type VideoEl = HTMLVideoElement & {
   requestVideoFrameCallback: (callback: (now: number, { mediaTime: number }) => void) => void;
 };
@@ -376,7 +386,7 @@ export class FrameSeriesLayer implements IBaseVideoLayer {
 
   public onFrameChanged: (mills: number) => void;
   public isEmpty() {
-    return this.seriesSets.length > 0;
+    return this.seriesSets.length === 0;
   }
   public getSeries() {
     return this.seriesSets;

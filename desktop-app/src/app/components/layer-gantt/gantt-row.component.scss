@@ -14,7 +14,7 @@ $row-font-size: 0.75rem;
   padding: 0 0.7rem;
   border-bottom: solid 1px #0002;
   text-align: right;
-  color: #000a;
+  @include chill-text;
 }
 .row {
   font-size: $row-font-size;

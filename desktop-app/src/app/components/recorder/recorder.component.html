@@ -1,0 +1,70 @@
+<ng-container class="video" *ngIf="!exporting">
+  <div class="main-options" *ngIf="!isRecording && stopped">
+    <button *ngIf="canSelect()" mat-icon-button matTooltip="Add Another Recording" (click)="select()">
+      <i class="fa fa-fw fa-tv"></i>
+    </button>
+    <div class="sep"></div>
+    <ng-container *ngIf="!videoLayer.isPlaying()">
+      <button matTooltip="Add Text" matTooltipPosition="right" mat-icon-button (click)="addText()">
+        <i class="fa fa-fw fa-font"></i>
+      </button>
+      <button matTooltip="Add Arrow" matTooltipPosition="right" mat-icon-button (click)="addArrow()">
+        <i class="fa fa-fw fa-long-arrow-alt-right"></i>
+      </button>
+      <button matTooltip="Add Circle" matTooltipPosition="right" mat-icon-button (click)="addCircle()">
+        <i class="far fa-fw fa-circle"></i>
+      </button>
+      <button matTooltip="Add Rectangle" matTooltipPosition="right" mat-icon-button (click)="addRect()">
+        <i class="far fa-fw fa-square"></i>
+      </button>
+      <button matTooltip="Add Star" matTooltipPosition="right" mat-icon-button (click)="addStar()">
+        <i class="fa fa-fw fa-star"></i>
+      </button>
+      <button matTooltip="Add Triangle" matTooltipPosition="right" mat-icon-button (click)="addTriangle()">
+        <i class="fa fa-fw fa-play fa-rotate-270"></i>
+      </button>
+    </ng-container>
+    <button *ngIf="canExport()" matTooltip="Export Recording" mat-icon-button (click)="export()">
+      <i class="fa fa-fw fa-file-export"></i>
+    </button>
+  </div>
+  <app-player
+    [source]="preview"
+    (videoClicked)="togglePause()"
+    [capturer]="capturer"
+    [layers]="layers"
+    [video]="videoLayer"
+    [fps]="25"
+    #player
+  ></app-player>
+</ng-container>
+<app-big-overlay *ngIf="isEmpty">
+  <div class="mat-headline big-overlay big-button" (click)="select()">
+    <i class="fa fa-fw fa-tv"></i> Start Recording
+  </div>
+</app-big-overlay>
+<app-big-overlay *ngIf="isRecording && !processing">
+  <div class="big-overlay">
+    <div class="pause-recording" (click)="togglePause()">
+      <div class="mat-headline big-button">
+        <i class="fa" [class.fa-circle]="!isRecordingPaused" [class.fa-pause]="isRecordingPaused"></i>
+        Recording {{ isRecordingPaused ? 'Paused' : 'In Progress' }}
+        <span #recordingDur></span>
+      </div>
+    </div>
+    <div class="stop-recording" (click)="stop()">
+      <div class="mat-headline big-button">
+        <i class="fa fa-play-circle"></i>
+        Done
+      </div>
+    </div>
+  </div>
+</app-big-overlay>
+<app-big-overlay *ngIf="processing">
+  <div class="big-overlay">
+    <div class="processing-container">
+      <div class="mat-headline">Processing</div>
+      <div><mat-progress-bar mode="indeterminate"></mat-progress-bar></div>
+    </div>
+  </div>
+</app-big-overlay>

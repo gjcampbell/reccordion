@@ -4,7 +4,7 @@
   [class.single-row]="!model.multiRow"
   [class.selected]="isSelected(model)"
 >
-  <div class="header">{{ model.getType() }}</div>
+  <div class="header">{{ model.getType() }} Layer</div>
   <div class="items" #itemContainer>
     <div *ngFor="let item of model.getItems()" class="item">
       <div class="item-header">{{ model.getLabel(item) }}</div>

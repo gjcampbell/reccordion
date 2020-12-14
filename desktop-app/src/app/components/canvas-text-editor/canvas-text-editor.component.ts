@@ -1,61 +1,14 @@
 import { Component } from '@angular/core';
-import { ShapeService } from 'app/services/shape.service';
+import { ShapeService, shapeOptions, colorOptions, IColor, IShapeOption } from 'app/services/shape.service';
 import { ResizerService } from '../resizer.service';
 import { PlayerCanvasModel } from '../player-canvas.model';
 import { CommentLayer, IComment } from 'app/services/graphics.models';
-
-export interface IColor {
-  fg: string;
-  bg: string;
-}
-export interface IShape {
-  name: string;
-  icon: string;
-  type: string;
-}
-
-export const fgDark = '#141518',
-  fgLight = '#ECF0F1',
-  color = (bg: string, fg: string) => ({ bg, fg }),
-  colorOptions = [
-    color('#25BC99', fgDark),
-    color('#36CD62', fgDark),
-    color('#3796E1', fgDark),
-    color('#9A56BD', fgDark),
-    color('#344860', fgLight),
-    color('#1FA083', fgLight),
-    color('#2EAF53', fgLight),
-    color('#2B7EBF', fgLight),
-    color('#8D40B4', fgLight),
-    color('#2C3D52', fgLight),
-    color('#F0C600', fgDark),
-    color('#E58000', fgDark),
-    color('#E64D33', fgDark),
-    color('#ECF0F1', fgDark),
-    color('#95A5A6', fgDark),
-    color('#F29E00', fgLight),
-    color('#D25600', fgLight),
-    color('#BF3A22', fgLight),
-    color('#BDC3C8', fgDark),
-    color('#7F8C8D', fgDark),
-  ] as IColor[],
-  shape = (name: string, icon: string, type: string = 'points') => ({ name, icon, type }),
-  shapeOptions = [
-    shape('rect', 'fa-square', 'rect'),
-    shape('circle', 'fa-circle', 'circle'),
-    shape('arrow', 'fa-long-arrow-alt-right'),
-    shape('triangle-up', 'fa-play fa-rotate-270'),
-    shape('triangle-right', 'fa-play'),
-    shape('triangle-down', 'fa-play fa-rotate-90'),
-    shape('triangle-left', 'fa-play fa-rotate-180'),
-    shape('star', 'fa-star'),
-  ] as IShape[];
 
 @Component({
   selector: 'app-canvas-text-editor',
   templateUrl: './canvas-text-editor.component.html',
   styleUrls: ['./canvas-text-editor.component.scss'],
-  providers: [ResizerService, ShapeService],
+  providers: [ResizerService],
 })
 export class CanvasTextEditorComponent {
   protected resizers = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
@@ -86,24 +39,12 @@ export class CanvasTextEditorComponent {
     comment.fillColor = color.fg;
   }
 
-  protected handleShapeClick(comment: IComment, shape: IShape) {
-    comment.shape = shape.type;
-    comment.points = this.getShapePoints(shape.name, comment) || [];
-  }
+  protected handleShapeClick(comment: IComment, shapeOption: IShapeOption) {
+    const { points, shape, shapeData } = this.shapeService.createShape(shapeOption, comment);
 
-  private getShapePoints(name: string, comment: IComment) {
-    switch (name) {
-      case 'star':
-        return this.shapeService.createStarPoints(5, 0.5, comment);
-      case 'triangle-up':
-        return this.shapeService.createPolygon(3, Math.PI, comment);
-      case 'triangle-right':
-        return this.shapeService.createPolygon(3, Math.PI / 2, comment);
-      case 'triangle-down':
-        return this.shapeService.createPolygon(3, 0, comment);
-      case 'triangle-left':
-        return this.shapeService.createPolygon(3, Math.PI * 1.5, comment);
-    }
+    comment.shape = shape;
+    comment.points = points;
+    comment.shapeData = shapeData;
   }
 
   protected handleToggleShadowClick(comment: IComment) {

@@ -15,14 +15,6 @@ import { PlayerCanvasModel } from './player-canvas.model';
       (widthChange)="handleDimChange()"
       [class.live]="isLive"
     >
-      <div class="video-message" *ngIf="isLive && capturer" (click)="togglePlay()">
-        <div class="mat-headline">
-          <i class="fa fa-circle" [class.message-paused]="isLivePause"></i> Recording
-          {{ isLivePause ? 'Paused' : 'In Progress' }}
-          <span>{{ this.liveTime }}</span>
-        </div>
-      </div>
-
       <video
         class="display-live"
         #preview
@@ -67,22 +59,6 @@ import { PlayerCanvasModel } from './player-canvas.model';
       .live .display-live {
         display: block;
       }
-      .video-message {
-        position: absolute;
-        padding: 2rem;
-        background: #fffb;
-        border-radius: 10px;
-        box-shadow: 0 0 8px #888;
-      }
-      .video-message p {
-        text-align: center;
-      }
-      .video-message i {
-        color: red;
-      }
-      .video-message i.message-paused {
-        color: #0005;
-      }
       video {
         width: 100%;
         height: 100%;
@@ -93,10 +69,7 @@ import { PlayerCanvasModel } from './player-canvas.model';
         transition: none !important;
       }
       .play-bar {
-        padding: 0 1rem;
-        background: #fff3;
-        box-shadow: 0 0 8px #0007;
-        border-top: solid 1px #fff2;
+        padding: 0.5rem;
         box-sizing: border-box;
         width: 100%;
       }

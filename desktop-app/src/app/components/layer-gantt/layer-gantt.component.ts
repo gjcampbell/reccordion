@@ -28,7 +28,7 @@ export class LayerGanttComponent implements OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.updater.addUpdateListener(() => this.updateLabels());
+    this.disposer = this.updater.addUpdateListener(() => this.updateLabels());
   }
 
   private updateLabels() {

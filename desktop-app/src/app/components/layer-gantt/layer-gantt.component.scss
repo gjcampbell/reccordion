@@ -1,8 +1,11 @@
+@import '../../../theme.scss';
+
 :host {
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
   display: block;
+  @include tool-panel;
 }
 .buttons-container {
   display: grid;
@@ -11,6 +14,8 @@
 }
 .time-label {
   text-align: right;
+  @include chill-text;
+  padding-right: 1rem;
 }
 .toolbar {
   display: grid;

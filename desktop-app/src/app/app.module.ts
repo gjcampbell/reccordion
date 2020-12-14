@@ -16,13 +16,15 @@ import { ElectronService } from './services/electron.service';
 import { FastNgUpdateService } from './services/fast-ng-update.service';
 import { RecordingService } from './services/recording.service';
 import { RendererService, ReqRendererService } from './services/renderer.service';
+import { ShapeService } from './services/shape.service';
 
 import { AppComponent } from './app.component';
-import { ExportDialog, RecorderComponent, ScreenPickerDialog } from './components/recorder.component';
+import { CanvasTextEditorComponent } from './components/canvas-text-editor/canvas-text-editor.component';
+import { BigOverlayComponent } from './components/big-overlay/big-overlay.component';
+import { ExportDialog, RecorderComponent, ScreenPickerDialog } from './components/recorder/recorder.component';
 import { GanttRowComponent } from './components/layer-gantt/gantt-row.component';
 import { LayerGanttComponent } from './components/layer-gantt/layer-gantt.component';
 import { PlayerCanvasComponent } from './components/player-canvas.component';
-import { CanvasTextEditorComponent } from './components/canvas-text-editor/canvas-text-editor.component';
 import { PlayerComponent } from './components/player.component';
 import { VideoSizerComponent } from './components/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
@@ -32,6 +34,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -44,6 +47,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
 @NgModule({
   declarations: [
     AppComponent,
+    BigOverlayComponent,
     CanvasTextEditorComponent,
     ExportDialog,
     GanttRowComponent,
@@ -64,6 +68,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     MatButtonModule,
     MatDialogModule,
     MatMenuModule,
+    MatProgressBarModule,
     MatProgressSpinnerModule,
     MatSliderModule,
     MatTabsModule,
@@ -83,6 +88,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     RecordingService,
     ReqRendererService,
     RendererService,
+    ShapeService,
   ],
   bootstrap: [AppComponent],
 })
