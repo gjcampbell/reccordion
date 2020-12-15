@@ -107,55 +107,23 @@
           </div>
         </mat-menu>
         <button matTooltip="Shadow" [class.active]="!!comment.shadowBlur" (click)="handleToggleShadowClick(comment)">
-          <i class="fa fa-fw fa-clone fa-rotate-270"></i>
+          <i class="fa fa-fw fa-umbrella-beach"></i>
         </button>
         <div class="sep"></div>
-        <button mat (click)="comment.align = 'left'" [class.active]="comment.align === 'left'" matTooltip="Align Left">
-          <i class="fa fa-fw fa-align-left"></i>
+        <button mat (click)="reorder(comment, layer, -1)" matTooltip="Push Behind">
+          <span class="fa-stack">
+            <i class="fa fa-stack-1x fa-square upper left bg-icon"></i>
+            <i class="fa fa-stack-1x fa-square lower right"></i>
+          </span>
         </button>
-        <button
-          mat
-          (click)="comment.align = 'center'"
-          [class.active]="comment.align === 'center'"
-          matTooltip="Align Center"
-        >
-          <i class="fa fa-fw fa-align-center"></i>
-        </button>
-        <button
-          mat
-          (click)="comment.align = 'right'"
-          [class.active]="comment.align === 'right'"
-          matTooltip="Align Right"
-        >
-          <i class="fa fa-fw fa-align-right"></i>
+        <button mat (click)="reorder(comment, layer, 1)" matTooltip="Bring in Front">
+          <span class="fa-stack">
+            <i class="fa fa-stack-1x fa-square upper left"></i>
+            <i class="fa fa-stack-1x fa-square lower right bg-icon"></i>
+          </span>
         </button>
         <div class="sep"></div>
-        <button mat (click)="comment.vAlign = 'top'" [class.active]="comment.vAlign === 'top'" matTooltip="Align Top">
-          <i class="fa fa-fw fa-grip-lines top"></i>
-        </button>
-        <button
-          mat
-          (click)="comment.vAlign = 'middle'"
-          [class.active]="comment.vAlign === 'middle'"
-          matTooltip="Align Middle"
-        >
-          <i class="fa fa-fw fa-grip-lines middle"></i>
-        </button>
-        <button
-          mat
-          (click)="comment.vAlign = 'bottom'"
-          [class.active]="comment.vAlign === 'bottom'"
-          matTooltip="Align Bottom"
-        >
-          <i class="fa fa-fw fa-grip-lines bottom"></i>
-        </button>
-        <div class="sep"></div>
-        <button
-          mat
-          (click)="delete(comment, layer)"
-          [class.active]="comment.vAlign === 'bottom'"
-          matTooltip="Delete Comment"
-        >
+        <button mat (click)="delete(comment, layer)" matTooltip="Delete Shape">
           <i class="fa fa-fw fa-trash"></i>
         </button>
       </div>
@@ -164,7 +132,66 @@
         [class]="'resizer resizer-' + resizer"
         (mousedown)="handleResizerMousedown(comment, $event, resizer)"
       ></div>
-      <div class="tools tools-bottom">
+      <div class="tools-bottom">
+        <div class="tools">
+          <button
+            mat
+            (click)="comment.align = 'left'"
+            [class.active]="comment.align === 'left'"
+            matTooltip="Align Left"
+          >
+            <i class="fa fa-fw fa-align-left"></i>
+          </button>
+          <button
+            mat
+            (click)="comment.align = 'center'"
+            [class.active]="comment.align === 'center'"
+            matTooltip="Align Center"
+          >
+            <i class="fa fa-fw fa-align-center"></i>
+          </button>
+          <button
+            mat
+            (click)="comment.align = 'right'"
+            [class.active]="comment.align === 'right'"
+            matTooltip="Align Right"
+          >
+            <i class="fa fa-fw fa-align-right"></i>
+          </button>
+          <div class="sep"></div>
+          <button mat (click)="comment.vAlign = 'top'" [class.active]="comment.vAlign === 'top'" matTooltip="Align Top">
+            <i class="fa fa-fw fa-grip-lines top"></i>
+          </button>
+          <button
+            mat
+            (click)="comment.vAlign = 'middle'"
+            [class.active]="comment.vAlign === 'middle'"
+            matTooltip="Align Middle"
+          >
+            <i class="fa fa-fw fa-grip-lines middle"></i>
+          </button>
+          <button
+            mat
+            (click)="comment.vAlign = 'bottom'"
+            [class.active]="comment.vAlign === 'bottom'"
+            matTooltip="Align Bottom"
+          >
+            <i class="fa fa-fw fa-grip-lines bottom"></i>
+          </button>
+          <div class="sep"></div>
+          <button mat (click)="incrementFontSize(comment, 1)" matTooltip="Increase Font Size">
+            <span class="fa-stack">
+              <i class="fa fa-stack-2x fa-sort-up bg-icon"></i>
+              <i class="fa fa-stack-1x fa-font"></i>
+            </span>
+          </button>
+          <button mat (click)="incrementFontSize(comment, -1)" matTooltip="Decrease Font Size">
+            <span class="fa-stack">
+              <i class="fa fa-stack-2x fa-sort-down bg-icon"></i>
+              <i class="fa fa-stack-1x fa-font"></i>
+            </span>
+          </button>
+        </div>
         <textarea [(ngModel)]="comment.text"></textarea>
       </div>
     </ng-container>

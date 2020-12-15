@@ -26,7 +26,7 @@ import { GanttRowComponent } from './components/layer-gantt/gantt-row.component'
 import { LayerGanttComponent } from './components/layer-gantt/layer-gantt.component';
 import { PlayerCanvasComponent } from './components/player-canvas.component';
 import { PlayerComponent } from './components/player.component';
-import { VideoSizerComponent } from './components/video-sizer.component';
+import { VideoSizerComponent } from './components/video-sizer/video-sizer.component';
 import { ScreenPickerComponent } from './components/screen-picker.component';
 import { ScrubberComponent } from './components/layer-gantt/scrubber.component';
 

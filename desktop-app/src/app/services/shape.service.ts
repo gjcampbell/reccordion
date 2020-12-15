@@ -70,7 +70,7 @@ export class ShapeService {
     return {
       ...origShape,
       shape: shapeOption.type,
-      shapeData: { ...shape },
+      shapeData: { ...shapeOption },
       points: this.getShapePoints(shapeOption.name, origShape),
     } as IShape;
   }

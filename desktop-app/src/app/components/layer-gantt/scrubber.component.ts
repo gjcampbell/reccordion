@@ -82,7 +82,9 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
           pxPerFrame > minPxPerFrame ? pxPerFrame : Math.ceil(minPxPerFrame / pxPerFrame) * pxPerFrame;
 
       this.cachedBg = {
-        background: `repeating-linear-gradient(90deg, #666, transparent 1px, transparent ${adjustedPxPerFrame}px)`,
+        background: `repeating-linear-gradient(90deg, #666, transparent 1px, transparent ${adjustedPxPerFrame}px),
+          repeating-linear-gradient(90deg, #666, transparent 1px, transparent ${adjustedPxPerFrame}px),
+          repeating-linear-gradient(90deg, #666, transparent 1px, transparent ${adjustedPxPerFrame}px)`,
       };
       this.expectedDurMs = durMs;
     }

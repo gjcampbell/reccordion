@@ -54,6 +54,7 @@ interface VideoClip {
 export interface IVideoLayer {
   setDimensions(width: number, height: number): void;
   drawFrame(millisecond: number, ctx: CanvasRenderingContext2D): Promise<void>;
+  isEmpty(): boolean;
 }
 
 export interface IBaseVideoLayer extends IVideoLayer {
@@ -66,7 +67,7 @@ export interface IBaseVideoLayer extends IVideoLayer {
   getDurationMs(): number;
   getCurrTimeMs(): number;
   isEmpty(): boolean;
-  addVideo(blob: Blob, durationMs: number, startMs: number): Promise<void>;
+  addVideo(blob: Blob, source: IVideoSource, startMs: number): Promise<void>;
 }
 
 export interface IVideo {
@@ -76,6 +77,11 @@ export interface IVideo {
   durationMs: number;
   frameRate?: number;
   quality?: number;
+}
+
+export interface IVideoSource {
+  icon: string;
+  name: string;
 }
 
 export interface ICapturable {
@@ -94,6 +100,7 @@ export interface ICapturer {
   pause: () => Promise<void>;
   capture: () => void;
   isRecording: () => boolean;
+  source: IVideoSource;
 }
 
 export class VideoTimeRanges {
@@ -346,7 +353,7 @@ export class FrameSeries {
   public get endMs() {
     return this.startMs - this.offsetMs + this.lengthMs;
   }
-  constructor(frames: Blob[], private fps: number, public startMs: number) {
+  constructor(frames: Blob[], private fps: number, public startMs: number, public readonly source: IVideoSource) {
     this.frameDurationMs = 1000 / this.fps;
     this.frameCount = frames.length;
     this.durationMs = this.frameCount * this.frameDurationMs;
@@ -375,7 +382,7 @@ export class FrameSeries {
     return this.durationMs;
   }
   private async loadFrames(frames: Blob[]) {
-    // this consumes insane memory
+    // this uses insanely high memory
     const allFrames: ImageBitmap[] = [];
     await Promise.all(frames.map(async (f) => allFrames.push(await createImageBitmap(f))));
   }
@@ -428,9 +435,9 @@ export class FrameSeriesLayer implements IBaseVideoLayer {
       await series.drawFrame(millisecond, ctx, this.w, this.h);
     }
   }
-  public async addVideo(blob: Blob, durationMs: number, startMs: number) {
+  public async addVideo(blob: Blob, source: IVideoSource, startMs: number) {
     const rawFrames = await this.frameExtractor.extractFrames(blob),
-      frameSeries = new FrameSeries(rawFrames.blobs, 25, startMs);
+      frameSeries = new FrameSeries(rawFrames.blobs, 25, startMs, source);
 
     this.timeIterator.durationMs += frameSeries.getOriginalDuration();
     this.seriesSets.push(frameSeries);

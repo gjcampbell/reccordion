@@ -2,10 +2,8 @@ import { Component, ElementRef, HostListener, Input, ViewChild } from '@angular/
 import { CommentLayer, IComment } from 'app/services/graphics.models';
 import { WebmBlobSeriesLayer } from 'app/services/renderer.service';
 import { Effect, EffectLayer } from 'app/services/effects.models';
-import { FrameSeries, FrameSeriesLayer, IBaseVideoLayer, IVideoLayer, VideoTimeRange } from 'app/services/video.models';
+import { FrameSeries, FrameSeriesLayer, VideoTimeRange } from 'app/services/video.models';
 import { PlayerCanvasModel } from '../player-canvas.model';
-import { basename } from 'path';
-import { isNgTemplate } from '@angular/compiler';
 
 export interface GanttRow<ItemType> {
   canReorderItems: boolean;
@@ -22,6 +20,7 @@ export interface GanttRow<ItemType> {
   getItemType(item: ItemType): string;
   getBg(item: ItemType): string;
   getFg(item: ItemType): string;
+  getIcon(item: ItemType): string;
   getBorder(item: ItemType): string;
   getLineHeight(item: ItemType): string;
 }
@@ -64,6 +63,9 @@ export abstract class BaseGanttRow<T extends { startMs: number; endMs: number }>
   public getLineHeight(item: T) {
     return '25px';
   }
+  public getIcon(item: T) {
+    return '';
+  }
 }
 
 export class EffectGanttRow extends BaseGanttRow<Effect> {
@@ -78,7 +80,7 @@ export class EffectGanttRow extends BaseGanttRow<Effect> {
     return this.layer.effects;
   }
   public getLabel(item: Effect): string {
-    return item.zoom ? 'zoom' : '';
+    return item.zoom ? 'Zoom' : '';
   }
   public getItemType(item: Effect): string {
     return item.zoom ? 'zoom' : '';
@@ -116,7 +118,7 @@ export class FrameSeriesGanttRow extends BaseGanttRow<FrameSeries> {
     return this.layer.getSeries();
   }
   public getLabel(item: FrameSeries) {
-    return 'Recording';
+    return item.source.name;
   }
   public getItemType(item: FrameSeries) {
     return 'recording';
@@ -137,6 +139,9 @@ export class FrameSeriesGanttRow extends BaseGanttRow<FrameSeries> {
     item.offsetMs += safeDelt;
     item.startMs += safeDelt;
   }
+  public getIcon(item: FrameSeries) {
+    return item.source.icon;
+  }
 }
 
 export class ShapeGanttRow extends BaseGanttRow<IComment> {
@@ -147,28 +152,31 @@ export class ShapeGanttRow extends BaseGanttRow<IComment> {
   }
 
   public getType() {
-    return 'Shapes';
+    return 'Shape';
   }
   public getItems(): IComment[] {
     return this.layer.getComments();
   }
   public getLabel(item: IComment) {
-    return `${item.shape} ${item.text}`;
+    return `${(item.shapeData && item.shapeData.ufName) || item.shape} ${item.text}`;
   }
   public getItemType(item: IComment) {
     return item.text ? 'text' : 'shape';
   }
   public getBg(item: IComment) {
-    return item.background;
+    return item.background === '#0000' ? '#fff' : item.background;
   }
   public getFg(item: IComment) {
-    return item.fillColor;
+    return item.fillColor === '#0000' ? '#000' : item.fillColor;
   }
   public getBorder(item: IComment) {
     return `solid ${item.borderWidth}px ${item.borderColor}`;
   }
   public getLineHeight(item: IComment) {
-    return `calc(25px - ${item.borderWidth * 2}px)`;
+    return `25px`;
+  }
+  public getIcon(item: IComment) {
+    return item.shapeData ? item.shapeData.icon : '';
   }
 }
 
@@ -297,10 +305,10 @@ export class GanttRowComponent {
     return {
       left: `${left * 100}%`,
       width: `${width * 100}%`,
-      background: this.model.getBg(item),
-      color: this.model.getFg(item),
+      //background: this.model.getBg(item),
+      //color: this.model.getFg(item),
       //border: this.model.getBorder(item),
-      lineHeight: this.model.getLineHeight(item),
+      //lineHeight: this.model.getLineHeight(item),
     };
   }
 

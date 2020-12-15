@@ -90,6 +90,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
       background: '#fff',
       height: 50,
       width: 300,
+      shapeData: { icon: 'fa-square', name: 'rect', ufName: 'Rectangle' },
     });
   }
 
@@ -251,7 +252,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
       this.preview = blob;
       this.stopped = true;
       this.processing = true;
-      await this.videoLayer.addVideo(blob, this.capturer.getDuration(), this.videoLayer.getDurationMs());
+      await this.videoLayer.addVideo(blob, this.capturer.source, this.videoLayer.getDurationMs());
       this.processing = false;
       this.capturer = undefined;
     }

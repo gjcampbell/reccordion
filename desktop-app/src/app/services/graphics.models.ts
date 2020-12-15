@@ -44,6 +44,13 @@ export const movePt = (pt: Pt, x: number, y: number) => {
       x: a.x * b.x,
       y: a.y * b.y,
     };
+  },
+  calcLineHeight = (fontSizePt: number) => {
+    return (fontSizePt || 16) * 1.2;
+  },
+  setFontSize = (comment: IComment, sizePt: number) => {
+    comment.fontSize = sizePt;
+    comment.lineHeight = calcLineHeight(sizePt);
   };
 
 export class ShapePoint {
@@ -104,8 +111,24 @@ export interface IComment {
 export class CommentLayer implements IVideoLayer {
   private comments: IComment[] = [];
 
+  public isEmpty() {
+    return this.comments.length < 1;
+  }
+
   public getComments() {
     return this.comments;
+  }
+
+  public reorder(comment: IComment, dir: number) {
+    const idx = this.comments.indexOf(comment);
+    if (idx >= 0) {
+      const max = this.comments.length - 1,
+        newIdx = Math.max(0, Math.min(max, idx + dir));
+      if (newIdx !== idx) {
+        this.comments.splice(idx, 1);
+        this.comments.splice(newIdx, 0, comment);
+      }
+    }
   }
 
   public removeComment(comment: IComment) {
@@ -125,7 +148,7 @@ export class CommentLayer implements IVideoLayer {
       vAlign: 'middle',
       font: 'sans-serif',
       fontSize: 16,
-      lineHeight: (comment.fontSize || 16) * 1.2,
+      lineHeight: calcLineHeight(comment.fontSize || 16),
       startMs: 0,
       endMs: 5000,
       strokeColor: '#fff',

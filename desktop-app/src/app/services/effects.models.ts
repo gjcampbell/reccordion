@@ -24,4 +24,7 @@ export class EffectLayer implements IVideoLayer {
 
   public setDimensions(width: number, height: number) {}
   public async drawFrame(millisecond: number, ctx: CanvasRenderingContext2D) {}
+  public isEmpty() {
+    return this.effects.length < 1;
+  }
 }

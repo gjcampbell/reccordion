@@ -1,0 +1,65 @@
+@import '../../../theme.scss';
+
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 1rem);
+  height: calc(100% - 0.5rem);
+  margin-top: 0.5rem;
+  overflow: auto;
+}
+.content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  box-shadow: 0 0 8px #000;
+  margin: 20px auto;
+  @include chill-text;
+}
+.edge {
+  position: absolute;
+  border: solid 1px $chill-text;
+  font-size: 8px;
+  box-sizing: border-box;
+  visibility: hidden;
+}
+.resizing .edge {
+  visibility: visible;
+}
+.edge span {
+}
+.height {
+  height: 100%;
+  top: 0;
+  right: -10px;
+  border-width: 1px 0 1px 0;
+  display: flex;
+  width: 10px;
+  align-items: center;
+  padding-left: 10px;
+  background: linear-gradient(90deg, transparent 5px, $chill-text 5px, transparent 6px);
+}
+.width {
+  width: 100%;
+  text-align: center;
+  bottom: -10px;
+  height: 10px;
+  left: 0;
+  padding-top: 6px;
+  border-width: 0 1px 0 1px;
+  background: linear-gradient(0deg, transparent 5px, $chill-text 5px, transparent 6px);
+}
+.handle {
+  cursor: grab;
+  transform: rotate(135deg);
+  right: -12px;
+  bottom: -18px;
+  position: absolute;
+  user-select: none;
+}
+.resizing .handle {
+  cursor: grabbing;
+}

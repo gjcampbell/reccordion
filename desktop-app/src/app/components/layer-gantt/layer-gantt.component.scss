@@ -19,6 +19,7 @@
 }
 .toolbar {
   display: grid;
+  border-bottom: solid 1px #666;
   grid-template-columns: 140px 1fr;
   .buttons {
     background: #0002;
@@ -27,4 +28,9 @@
 .scrubber-container {
   position: relative;
   background: #0001;
+}
+.layers {
+  max-height: 90px;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }

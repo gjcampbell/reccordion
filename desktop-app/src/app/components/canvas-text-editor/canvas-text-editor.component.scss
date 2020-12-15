@@ -80,6 +80,24 @@
   line-height: 0;
   vertical-align: bottom;
 }
+.fa-stack {
+  width: 17px;
+  .bg-icon {
+    color: #86b;
+  }
+  .upper {
+    margin-top: -3px;
+  }
+  .right {
+    margin-right: -3px;
+  }
+  .lower {
+    margin-bottom: -3px;
+  }
+  .left {
+    margin-left: -3px;
+  }
+}
 .tools {
   border-radius: 3px;
   position: absolute;
@@ -102,17 +120,23 @@
 }
 .tools-top {
   bottom: calc(100% + 15px);
+  z-index: 1;
 }
 .tools-bottom {
   width: 100%;
-  padding: 4px;
+  padding-top: 15px;
+  min-width: 280px;
   top: calc(100% + 15px);
+  z-index: 1;
+  .tools {
+    position: static;
+  }
 }
 .tools-bottom textarea {
   min-height: 65px;
   width: 100%;
   box-sizing: border-box;
-  z-index: 2;
+  border-radius: 3px;
 }
 .comment {
   position: absolute;

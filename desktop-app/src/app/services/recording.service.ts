@@ -50,10 +50,10 @@ export class RecordingService {
       }),
       videoRecorder = new MediaRecorder(videoStream, { mimeType: 'video/webm' });
 
-    return this.createCapturer(videoRecorder);
+    return this.createCapturer(videoRecorder, view.name, view.iconUrl);
   }
 
-  private createCapturer(videoRecorder: MediaRecorder) {
+  private createCapturer(videoRecorder: MediaRecorder, name: string, icon: string) {
     let duration = 0,
       startTime: number = 0;
 
@@ -81,6 +81,10 @@ export class RecordingService {
             videoRecorder.start();
           }
           startTime = Date.now();
+        },
+        source: {
+          name,
+          icon,
         },
       };
 

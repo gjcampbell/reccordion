@@ -18,7 +18,17 @@
         >
           <div class="left-handle handle" (mousedown)="handleLeftMseDown($event, item)"></div>
           <div class="right-handle handle" (mousedown)="handleRightMseDown($event, item)"></div>
-          <div class="text">{{ model.getLabel(item) }}</div>
+          <div class="text">
+            <img *ngIf="model.getIcon(item)?.startsWith('data'); else icon" [src]="model.getIcon(item)" />
+            <ng-template #icon>
+              <i
+                *ngIf="model.getIcon(item)"
+                [class]="'fa fa-fw ' + model.getIcon(item)"
+                [style.color]="model.getBg(item)"
+              ></i>
+            </ng-template>
+            {{ model.getLabel(item) }}
+          </div>
         </div>
       </div>
     </div>

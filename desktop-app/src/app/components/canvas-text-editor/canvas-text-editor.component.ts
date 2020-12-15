@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ShapeService, shapeOptions, colorOptions, IColor, IShapeOption } from 'app/services/shape.service';
 import { ResizerService } from '../resizer.service';
 import { PlayerCanvasModel } from '../player-canvas.model';
-import { CommentLayer, IComment } from 'app/services/graphics.models';
+import { CommentLayer, IComment, setFontSize } from 'app/services/graphics.models';
 
 @Component({
   selector: 'app-canvas-text-editor',
@@ -63,6 +63,15 @@ export class CanvasTextEditorComponent {
     if (comment.borderColor === '#0000') {
       comment.borderColor = '#000';
     }
+  }
+
+  protected incrementFontSize(comment: IComment, dir: number) {
+    const newSize = Math.max(1, Math.min(200, comment.fontSize + dir));
+    setFontSize(comment, newSize);
+  }
+
+  protected reorder(comment: IComment, layer: CommentLayer, dir: number) {
+    layer.reorder(comment, dir);
   }
 
   protected handleMousedown(comment: IComment, origEvt: MouseEvent) {

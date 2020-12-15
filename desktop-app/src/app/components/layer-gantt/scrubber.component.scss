@@ -29,7 +29,7 @@
 .container {
   display: block;
   position: relative;
-  width: 100%;
+  width: calc(100% - #{$scrollbar-width});
   height: 100%;
 }
 .bar {

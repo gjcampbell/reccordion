@@ -264,14 +264,35 @@ $altTheme: mat-light-theme($theme-primary, $theme-accent, $theme-warn);
   }
 }
 
+$chill-text: #dadada;
 @mixin chill-text {
   color: #dadada;
 }
 
 $tool-panel-spacing: 0.5rem;
 
+.mat-menu-panel {
+  background: transparent !important;
+}
+.mat-menu-content {
+  background: #fffd !important;
+}
+
 @mixin tool-panel {
   background: #fff2;
   box-shadow: 0 0 8px #0007;
   border: solid 1px #fff2;
+}
+$scrollbar-width: 15px;
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px #000;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: #fff3;
+  width: $scrollbar-width;
+  border-radius: 4px;
+}
+::-webkit-scrollbar {
+  width: $scrollbar-width;
 }

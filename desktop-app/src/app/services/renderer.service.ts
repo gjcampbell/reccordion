@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IBaseVideoLayer, IVideo, IWebMWriter, VideoTimeRanges } from './video.models';
+import { IBaseVideoLayer, IVideo, IVideoLayer, IVideoSource, IWebMWriter, VideoTimeRanges } from './video.models';
 
 const WebMWriter = (window as any).WebMWriter as typeof IWebMWriter;
 
@@ -167,7 +167,7 @@ export class WebmBlobSeriesLayer implements IBaseVideoLayer {
     }, 2);
   }
 
-  public async addVideo(blob: Blob, durationMs: number, startMs: number) {
-    this.ranges.addVideo(blob, durationMs);
+  public async addVideo(blob: Blob, source: IVideoSource, startMs: number) {
+    //this.ranges.addVideo(blob, durationMs);
   }
 }
