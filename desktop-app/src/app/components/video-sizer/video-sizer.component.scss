@@ -59,6 +59,10 @@
   bottom: -18px;
   position: absolute;
   user-select: none;
+  display: none;
+  .enabled {
+    display: block;
+  }
 }
 .resizing .handle {
   cursor: grabbing;

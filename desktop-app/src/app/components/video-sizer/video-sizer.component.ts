@@ -11,7 +11,7 @@ import { AfterViewInit, Component, EventEmitter, HostBinding, Input, Output } fr
       <div class="width edge">
         <span>{{ width * pixelRatio }}px</span>
       </div>
-      <div class="handle" (mousedown)="handleMousedown($event)">
+      <div class="handle" [class.enabled]="enabled" (mousedown)="handleMousedown($event)">
         <i class="fa fa-arrows-alt-v"></i>
       </div>
     </div>
@@ -37,6 +37,9 @@ export class VideoSizerComponent {
   public minWidth = 50;
   @Input()
   public minHeight = 50;
+
+  @Input()
+  public enabled = false;
 
   protected get pixelRatio() {
     return window.devicePixelRatio;

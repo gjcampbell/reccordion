@@ -6,14 +6,13 @@ import { PlayerCanvasModel } from '../player-canvas.model';
   selector: 'app-scrubber',
   template: `
     <div class="margin">
-      <div class="container" #container [style]="getSeekbarBg()">
+      <div class="container" #container [style]="getSeekbarBg()" (click)="handleContainerClick($event)">
         <div #bar class="bar" [style.left]="getBarPos()" (mousedown)="handleBarMouseDown($event)">
           <div class="marker"></div>
           <div class="sliver" tabindex="0"></div>
         </div>
       </div>
     </div>
-    <div class="seekbar" (click)="handleSeekbarClick($event)"></div>
   `,
   styleUrls: ['./scrubber.component.scss'],
 })
@@ -96,7 +95,7 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
     return (snappedFrame / this.video.getDurationMs()) * 100 + '%';
   }
 
-  protected handleSeekbarClick(evt: MouseEvent & { target: HTMLDivElement }) {
+  protected handleContainerClick(evt: MouseEvent & { target: HTMLDivElement }) {
     const width = this.getContainerWidth(),
       x = evt.offsetX,
       dur = this.video.getDurationMs(),
@@ -105,6 +104,8 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
 
     this.video.seek(seekMs);
   }
+
+  protected handleSeekbarClick(evt: MouseEvent & { target: HTMLDivElement }) {}
 
   protected handleBarMouseDown(evt: MouseEvent) {
     const width = this.getContainerWidth(),
@@ -126,5 +127,6 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
 
     window.addEventListener('mousemove', handleMseMove);
     window.addEventListener('mouseup', handleMseUp);
+    evt.stopImmediatePropagation();
   }
 }

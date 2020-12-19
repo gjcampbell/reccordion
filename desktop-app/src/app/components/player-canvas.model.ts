@@ -33,7 +33,7 @@ export class PlayerCanvasModel {
   }
   public formatAsFrame(timeMs: number) {
     const { minute, second, frame } = this.getFrameTime(timeMs);
-    return `${minute}m${second}s${frame}f`;
+    return `${minute}:${second.toString().padStart(2, '0')} ${frame.toString().padStart(2, '0')}f`;
   }
   public getFrameTime(timeMs: number) {
     const snappedMs = this.snapMsToFrame(timeMs),

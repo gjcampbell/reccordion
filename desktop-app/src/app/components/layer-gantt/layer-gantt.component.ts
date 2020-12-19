@@ -6,6 +6,8 @@ import { WebmBlobSeriesLayer } from 'app/services/renderer.service';
 import { FrameSeriesLayer, IVideoLayer } from 'app/services/video.models';
 import { PlayerCanvasModel } from '../player-canvas.model';
 import { EffectGanttRow, FrameSeriesGanttRow, GanttRow, ShapeGanttRow, VideoGanttRow } from './gantt-row.component';
+import { MatDialog } from '@angular/material/dialog';
+import { DurationEditorDialog } from './duration-editor-dialog.component';
 
 @Component({
   selector: 'app-layer-gantt',
@@ -21,7 +23,11 @@ export class LayerGanttComponent implements OnDestroy, AfterViewInit {
   @ViewChild('totalLabel', { static: true })
   protected totalLabel: ElementRef<HTMLDivElement>;
 
-  constructor(protected readonly canvasModel: PlayerCanvasModel, private readonly updater: FastNgUpdateService) {}
+  constructor(
+    protected readonly canvasModel: PlayerCanvasModel,
+    private readonly updater: FastNgUpdateService,
+    private readonly dialog: MatDialog
+  ) {}
 
   ngOnDestroy() {
     this.disposer();
@@ -29,6 +35,15 @@ export class LayerGanttComponent implements OnDestroy, AfterViewInit {
 
   ngAfterViewInit() {
     this.disposer = this.updater.addUpdateListener(() => this.updateLabels());
+  }
+
+  protected handleEnterDuration() {
+    const dialog = this.dialog.open(DurationEditorDialog, { data: this.canvasModel });
+    dialog.afterClosed().subscribe((durMs: number) => {
+      if (durMs) {
+        this.canvasModel.video.setDurationMs(durMs);
+      }
+    });
   }
 
   private updateLabels() {

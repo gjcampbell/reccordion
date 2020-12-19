@@ -144,6 +144,7 @@ export class WebmBlobSeriesLayer implements IBaseVideoLayer {
   public getDurationMs() {
     return this.ranges.durationMs;
   }
+  public setDurationMs(value: number) {}
   public getCurrTimeMs() {
     return this.ranges.timeMs;
   }

@@ -21,6 +21,7 @@ import { ShapeService } from './services/shape.service';
 import { AppComponent } from './app.component';
 import { CanvasTextEditorComponent } from './components/canvas-text-editor/canvas-text-editor.component';
 import { BigOverlayComponent } from './components/big-overlay/big-overlay.component';
+import { DurationEditorDialog } from './components/layer-gantt/duration-editor-dialog.component';
 import { ExportDialog, RecorderComponent, ScreenPickerDialog } from './components/recorder/recorder.component';
 import { GanttRowComponent } from './components/layer-gantt/gantt-row.component';
 import { LayerGanttComponent } from './components/layer-gantt/layer-gantt.component';
@@ -32,6 +33,7 @@ import { ScrubberComponent } from './components/layer-gantt/scrubber.component';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -49,6 +51,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     AppComponent,
     BigOverlayComponent,
     CanvasTextEditorComponent,
+    DurationEditorDialog,
     ExportDialog,
     GanttRowComponent,
     LayerGanttComponent,
@@ -67,6 +70,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     HttpClientModule,
     MatButtonModule,
     MatDialogModule,
+    MatInputModule,
     MatMenuModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,

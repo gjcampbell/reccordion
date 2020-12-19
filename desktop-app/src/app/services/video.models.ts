@@ -65,6 +65,7 @@ export interface IBaseVideoLayer extends IVideoLayer {
   pause(): Promise<void>;
   seek(mills: number): Promise<void>;
   getDurationMs(): number;
+  setDurationMs(value: number);
   getCurrTimeMs(): number;
   isEmpty(): boolean;
   addVideo(blob: Blob, source: IVideoSource, startMs: number): Promise<void>;

@@ -14,6 +14,7 @@ import { PlayerCanvasModel } from './player-canvas.model';
       (heightChange)="handleDimChange()"
       (widthChange)="handleDimChange()"
       [class.live]="isLive"
+      [enabled]="!video.isEmpty() || isLive"
     >
       <video
         class="display-live"

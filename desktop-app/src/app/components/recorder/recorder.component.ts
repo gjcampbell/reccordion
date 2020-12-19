@@ -276,8 +276,8 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     <div mat-dialog-content>
       <app-screen-picker (itemSelected)="handleSelected($event)" [startRecording]="startRecording"></app-screen-picker>
     </div>
-    <div mat-dialog-actions>
-      <button mat-button color="primary" [disabled]="!canOpen" (click)="done()">Start Recording</button>
+    <div mat-dialog-actions align="end">
+      <button mat-flat-button color="primary" [disabled]="!canOpen" (click)="done()">Start Recording</button>
       <button mat-button (click)="cancel()">Cancel</button>
     </div>
   `,
@@ -312,7 +312,7 @@ export class ScreenPickerDialog {
 @Component({
   template: `
     <div mat-dialog-content>{{ status }} {{ percent }}</div>
-    <div mat-dialog-actions>
+    <div mat-dialog-actions align="end">
       <button mat-button (click)="close()">Cancel</button>
     </div>
   `,

@@ -13,9 +13,22 @@
   align-items: center;
 }
 .time-label {
-  text-align: right;
+  text-align: center;
+  cursor: pointer;
   @include chill-text;
-  padding-right: 1rem;
+  .total {
+    font-size: 0.8rem;
+  }
+  .time {
+    color: $darkteal;
+  }
+  transition: 0.2s;
+  &:hover {
+    color: #fff;
+    .time {
+      color: #fff;
+    }
+  }
 }
 .toolbar {
   display: grid;
