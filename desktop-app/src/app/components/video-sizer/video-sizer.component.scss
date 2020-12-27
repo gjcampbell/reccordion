@@ -60,7 +60,7 @@
   position: absolute;
   user-select: none;
   display: none;
-  .enabled {
+  &.enabled {
     display: block;
   }
 }

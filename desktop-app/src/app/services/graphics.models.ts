@@ -229,6 +229,7 @@ export class CommentLayer implements IVideoLayer {
     ctx.fill();
     ctx.shadowBlur = 0;
     if (comment.borderWidth) {
+      ctx.closePath();
       ctx.strokeStyle = comment.borderColor;
       ctx.lineWidth = comment.borderWidth;
       ctx.stroke();

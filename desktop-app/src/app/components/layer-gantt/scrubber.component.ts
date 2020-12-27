@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, NgZone, HostListener } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { FastNgUpdateService } from 'app/services/fast-ng-update.service';
 import { PlayerCanvasModel } from '../player-canvas.model';
 
@@ -7,7 +7,13 @@ import { PlayerCanvasModel } from '../player-canvas.model';
   template: `
     <div class="margin">
       <div class="container" #container [style]="getSeekbarBg()" (click)="handleContainerClick($event)">
-        <div #bar class="bar" [style.left]="getBarPos()" (mousedown)="handleBarMouseDown($event)">
+        <div
+          #bar
+          class="bar"
+          [style.left]="getBarPos()"
+          (mousedown)="handleBarMouseDown($event)"
+          (click)="handleBarClick($event)"
+        >
           <div class="marker"></div>
           <div class="sliver" tabindex="0"></div>
         </div>
@@ -37,17 +43,13 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
   @ViewChild('container', { static: true })
   protected container: ElementRef<HTMLDivElement>;
 
-  constructor(
-    private readonly canvasModel: PlayerCanvasModel,
-    private readonly updater: FastNgUpdateService,
-    private readonly zone: NgZone
-  ) {}
+  constructor(private readonly canvasModel: PlayerCanvasModel, private readonly updater: FastNgUpdateService) {}
 
-  ngOnDestroy() {
+  public ngOnDestroy() {
     this.disposer();
   }
 
-  ngAfterViewInit() {
+  public ngAfterViewInit() {
     this.disposer = this.updater.addUpdateListener(() => this.updateBarPos());
   }
 
@@ -95,6 +97,10 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
     return (snappedFrame / this.video.getDurationMs()) * 100 + '%';
   }
 
+  protected handleBarClick(evt: MouseEvent) {
+    evt.stopImmediatePropagation();
+  }
+
   protected handleContainerClick(evt: MouseEvent & { target: HTMLDivElement }) {
     const width = this.getContainerWidth(),
       x = evt.offsetX,
@@ -104,8 +110,6 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
 
     this.video.seek(seekMs);
   }
-
-  protected handleSeekbarClick(evt: MouseEvent & { target: HTMLDivElement }) {}
 
   protected handleBarMouseDown(evt: MouseEvent) {
     const width = this.getContainerWidth(),

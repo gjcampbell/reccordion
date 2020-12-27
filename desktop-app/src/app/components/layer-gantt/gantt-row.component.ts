@@ -8,6 +8,7 @@ import { PlayerCanvasModel } from '../player-canvas.model';
 export interface GanttRow<ItemType> {
   canReorderItems: boolean;
   multiRow: boolean;
+  show: boolean;
   getType(): string;
   getItems(): ItemType[];
   getStartMs(item: ItemType): number;
@@ -28,6 +29,7 @@ export interface GanttRow<ItemType> {
 export abstract class BaseGanttRow<T extends { startMs: number; endMs: number }> implements GanttRow<T> {
   public abstract canReorderItems: boolean;
   public multiRow = false;
+  public show = true;
   public abstract getType(): string;
   public abstract getItems(): T[];
   public abstract getLabel(item: T): string;
@@ -108,6 +110,9 @@ export class VideoGanttRow extends BaseGanttRow<VideoTimeRange> {
 
 export class FrameSeriesGanttRow extends BaseGanttRow<FrameSeries> {
   public canReorderItems = false;
+  public get show() {
+    return this.layer.getSeries().length > 0;
+  }
   constructor(private readonly layer: FrameSeriesLayer) {
     super();
   }
@@ -147,6 +152,10 @@ export class FrameSeriesGanttRow extends BaseGanttRow<FrameSeries> {
 export class ShapeGanttRow extends BaseGanttRow<IComment> {
   public canReorderItems = true;
   public multiRow = true;
+  public get show() {
+    return this.layer.getComments().length > 0;
+  }
+
   constructor(private readonly layer: CommentLayer) {
     super();
   }

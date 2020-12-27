@@ -73,6 +73,10 @@ export class LayerGanttComponent implements OnDestroy, AfterViewInit {
     }
   }
 
+  protected getLayers() {
+    return this.canvasModel.layers.map((l) => this.getLayerModel(l));
+  }
+
   protected getLayerModel(layer: IVideoLayer) {
     let result = this.layerModelLookup.get(layer);
     if (!result) {
