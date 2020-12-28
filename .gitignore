@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+.vs/slnx.sqlite
+.vs/VSWorkspaceState.json
+.vs/reccordion/v16/.suo
