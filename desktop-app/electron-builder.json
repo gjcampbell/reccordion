@@ -29,7 +29,8 @@
   },
   "nsis": {
     "artifactName": "reccordion-installer.exe",
-    "perMachine": false
+    "perMachine": false,
+    "oneClick": false
   },
   "mac": {
     "icon": "dist/assets/icons",
