@@ -99,7 +99,9 @@ export class PlayerComponent implements AfterViewInit {
   @ViewChild('cvs')
   public playerCanvas: PlayerCanvasComponent;
 
-  public isLive: boolean = true;
+  public get isLive() {
+    return !!this.capturer;
+  }
 
   public get isLivePause() {
     return this.capturer && !this.capturer.isRecording();
@@ -137,11 +139,9 @@ export class PlayerComponent implements AfterViewInit {
     if (this.videoEl && value !== this.currentSource) {
       this.currentSource = value;
       if (value instanceof MediaStream) {
-        this.isLive = true;
         this.videoEl.srcObject = value;
         this.watchTime();
       } else {
-        this.isLive = false;
         this.videoEl.srcObject = undefined;
       }
     }

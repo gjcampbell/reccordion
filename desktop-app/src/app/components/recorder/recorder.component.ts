@@ -51,9 +51,9 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
   public get isEmpty() {
     return !this.capturer && this.videoLayer.isEmpty();
   }
-  @ViewChild('player')
+  @ViewChild('player', { static: false })
   public player: PlayerComponent;
-  @ViewChild('recordingDur')
+  @ViewChild('recordingDur', { static: false })
   public recordingDurLabel: ElementRef<HTMLSpanElement>;
 
   constructor(
@@ -193,7 +193,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
   }
 
   public canExport() {
-    return this.stopped && this.videoLayer.isEmpty();
+    return this.stopped && !this.videoLayer.isEmpty();
   }
 
   public async export() {
@@ -201,7 +201,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
       data: {
         width: this.player.width,
         height: this.player.height,
-        durationMs: this.capturer.getDuration(),
+        durationMs: this.videoLayer.getDurationMs(),
         layers: [this.videoLayer, this.textLayer],
       },
     });
@@ -242,6 +242,10 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     return this.capturer && !this.stopped;
   }
 
+  public clear() {
+    window.history.go(0);
+  }
+
   public async stop() {
     if (this.capturer) {
       if (this.canPause()) {
@@ -259,7 +263,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateRecordingDur() {
-    if (this.capturer && this.recordingDurLabel.nativeElement) {
+    if (this.capturer && this.recordingDurLabel && this.recordingDurLabel.nativeElement) {
       this.recordingDurLabel.nativeElement.textContent = formatTime(this.capturer.getDuration());
     }
   }

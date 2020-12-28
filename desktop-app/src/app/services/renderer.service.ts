@@ -61,11 +61,17 @@ export class ReqRendererService extends BaseRendererService {
       for (const layer of video.layers) {
         layer.drawFrame(mills, ctx);
       }
-      ctx.canvas.toBlob((blob) => frameBlobs.push({ blob, mills }), 'image/webp', video.quality);
-      return (canceled = progress(mills / video.durationMs, ''));
+      frameBlobs.push({ blob: await this.getBlob(ctx, video.quality), mills });
+      canceled = !progress(mills / video.durationMs, '');
+      return !canceled;
     });
 
     return !canceled ? frameBlobs : undefined;
+  }
+  private getBlob(ctx: CanvasRenderingContext2D, quality: number) {
+    return new Promise<Blob>((resolve) => {
+      ctx.canvas.toBlob(resolve, 'image/webp', quality);
+    });
   }
 }
 

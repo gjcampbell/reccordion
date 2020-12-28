@@ -220,6 +220,12 @@ export class TimeIterator {
   public getTimeMs() {
     return this.playing ? this.getTimeSinceStart() : this.currentTimeMs;
   }
+  public *getFrames() {
+    const msPerFrame = 1000 / this.fps;
+    for (let i = 0; i < this.durationMs; i += msPerFrame) {
+      yield i;
+    }
+  }
   private getTimeSinceStart() {
     const timeSincePlay = (new Date() as any) - (this.startTime as any),
       playOffset = this.currentTimeMs + timeSincePlay;
@@ -403,8 +409,12 @@ export class FrameSeriesLayer implements IBaseVideoLayer {
   public getSeries() {
     return this.seriesSets;
   }
-  public iterateFrames(handleFrame: (mills: any) => Promise<boolean>): Promise<void> {
-    throw new Error('Method not implemented.');
+  public async iterateFrames(handleFrame: (mills: any) => Promise<boolean>): Promise<void> {
+    for (const mills of this.timeIterator.getFrames()) {
+      if (!(await handleFrame(mills))) {
+        break;
+      }
+    }
   }
   public isPlaying(): boolean {
     return this.timeIterator.playing;

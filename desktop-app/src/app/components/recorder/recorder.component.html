@@ -1,6 +1,21 @@
 <ng-container class="video" *ngIf="!exporting">
   <div class="main-options" *ngIf="!isRecording && stopped">
-    <button *ngIf="canSelect()" mat-icon-button matTooltip="Add Another Recording" (click)="select()">
+    <button
+      *ngIf="canExport()"
+      mat-icon-button
+      matTooltip="Export and Share the Recording"
+      matTooltipPosition="right"
+      (click)="export()"
+    >
+      <i class="fa fa-fw fa-file-export"></i>
+    </button>
+    <button
+      *ngIf="canSelect()"
+      mat-icon-button
+      matTooltip="Add Another Recording"
+      matTooltipPosition="right"
+      (click)="select()"
+    >
       <i class="fa fa-fw fa-tv"></i>
     </button>
     <div class="sep"></div>
@@ -23,9 +38,10 @@
       <button matTooltip="Add Triangle" matTooltipPosition="right" mat-icon-button (click)="addTriangle()">
         <i class="fa fa-fw fa-play fa-rotate-270"></i>
       </button>
+      <div class="sep"></div>
     </ng-container>
-    <button *ngIf="canExport()" matTooltip="Export Recording" mat-icon-button (click)="export()">
-      <i class="fa fa-fw fa-file-export"></i>
+    <button matTooltip="Clear Everything and Start Over" matTooltipPosition="right" mat-icon-button (click)="clear()">
+      <i class="fa fa-fw fa-trash"></i>
     </button>
   </div>
   <app-player
