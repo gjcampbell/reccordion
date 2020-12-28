@@ -29,8 +29,8 @@ jobs:
           node-version: '10.x'
       # Runs a single command using the runners shell
       - name: Install
-        working-directory: $GITHUB_WORKSPACE/desktop-app
+        working-directory: ./reccordion/desktop-app
         run: npm i
       - name: Build 
-        working-directory: $GITHUB_WORKSPACE/desktop-app
+        working-directory: ./reccordion/desktop-app
         run: npm run electron:build
