@@ -22,7 +22,14 @@
   "extraResources": ["extraResources/**.*"],
   "win": {
     "icon": "dist/assets/icons/icon.png",
-    "target": ["portable"]
+    "target": ["portable", "nsis"]
+  },
+  "portable": {
+    "artifactName": "reccordion-portable.exe"
+  },
+  "nsis": {
+    "artifactName": "reccordion-installer.exe",
+    "perMachine": false
   },
   "mac": {
     "icon": "dist/assets/icons",
