@@ -26,14 +26,14 @@ export class ReqRendererService extends BaseRendererService {
   ) {
     const ctx = this.create2dCtx(video),
       frameRate = video.frameRate || 25,
-      writer = new WebMWriter({ quality: video.quality || 0.9999, frameRate });
+      writer = new WebMWriter({ quality: video.quality || 0.99999, frameRate });
 
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    ctx.scale(1 / window.devicePixelRatio, 1 / window.devicePixelRatio);
     const frames = await this.getFrames(rootVideo, video, ctx, progress);
 
     if (frames) {
       frames.sort((a, b) => a.mills - b.mills);
-      writer.setDimensions(video.width, video.height);
+      writer.setDimensions(video.width / window.devicePixelRatio, video.height / window.devicePixelRatio);
 
       for (let i = 1; i <= frames.length; i++) {
         const frame = frames[i - 1],
@@ -56,10 +56,11 @@ export class ReqRendererService extends BaseRendererService {
   ) {
     let canceled = false;
     const frameBlobs: { blob: Blob; mills: number }[] = [];
+
     await rootVideo.iterateFrames(async (mills) => {
       ctx.fillRect(0, 0, video.width, video.height);
       for (const layer of video.layers) {
-        layer.drawFrame(mills, ctx);
+        await layer.drawFrame(mills, ctx);
       }
       frameBlobs.push({ blob: await this.getBlob(ctx, video.quality), mills });
       canceled = !progress(mills / video.durationMs, '');

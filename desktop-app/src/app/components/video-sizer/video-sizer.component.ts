@@ -6,10 +6,10 @@ import { AfterViewInit, Component, EventEmitter, HostBinding, Input, Output } fr
     <div class="content" [class.resizing]="resizing" [style.width.px]="width" [style.height.px]="height">
       <ng-content></ng-content>
       <div class="height edge">
-        <span>{{ height * pixelRatio }}px</span>
+        <span>{{ height }}px</span>
       </div>
       <div class="width edge">
-        <span>{{ width * pixelRatio }}px</span>
+        <span>{{ width }}px</span>
       </div>
       <div class="handle" [class.enabled]="enabled" (mousedown)="handleMousedown($event)">
         <i class="fa fa-arrows-alt-v"></i>

@@ -199,6 +199,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
   public async export() {
     const dialogRef = this.dialog.open(ExportDialog, {
       data: {
+        quality: 0.99999,
         width: this.player.width,
         height: this.player.height,
         durationMs: this.videoLayer.getDurationMs(),
