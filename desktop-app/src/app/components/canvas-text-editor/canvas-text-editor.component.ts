@@ -11,35 +11,35 @@ import { CommentLayer, IComment, setFontSize } from 'app/services/graphics.model
   providers: [ResizerService],
 })
 export class CanvasTextEditorComponent {
-  protected resizers = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
-  protected shapeOptions = shapeOptions;
-  protected colorOptions = colorOptions;
+  public resizers = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+  public shapeOptions = shapeOptions;
+  public colorOptions = colorOptions;
 
   constructor(
-    protected readonly model: PlayerCanvasModel,
+    public readonly model: PlayerCanvasModel,
     private readonly resizerSvc: ResizerService,
     private readonly shapeService: ShapeService
   ) {}
 
-  protected getCommentLayers() {
+  public getCommentLayers() {
     return this.model.layers.filter((l) => l instanceof CommentLayer) as CommentLayer[];
   }
 
-  protected delete(comment: IComment, layer: CommentLayer) {
+  public delete(comment: IComment, layer: CommentLayer) {
     layer.removeComment(comment);
   }
 
-  protected handleClick(comment: IComment, evt: MouseEvent) {
+  public handleClick(comment: IComment, evt: MouseEvent) {
     this.model.select(comment);
     evt.stopImmediatePropagation();
   }
 
-  protected handleBgClick(comment: IComment, color: IColor) {
+  public handleBgClick(comment: IComment, color: IColor) {
     comment.background = color.bg;
     comment.fillColor = color.fg;
   }
 
-  protected handleShapeClick(comment: IComment, shapeOption: IShapeOption) {
+  public handleShapeClick(comment: IComment, shapeOption: IShapeOption) {
     const { points, shape, shapeData } = this.shapeService.createShape(shapeOption, comment);
 
     comment.shape = shape;
@@ -47,34 +47,34 @@ export class CanvasTextEditorComponent {
     comment.shapeData = shapeData;
   }
 
-  protected handleToggleShadowClick(comment: IComment) {
+  public handleToggleShadowClick(comment: IComment) {
     comment.shadowBlur = comment.shadowBlur ? 0 : 15;
   }
 
-  protected handleBorderColorClick(comment: IComment, color: string) {
+  public handleBorderColorClick(comment: IComment, color: string) {
     comment.borderColor = color;
     if (!comment.borderWidth) {
       comment.borderWidth = 4;
     }
   }
 
-  protected handleBorderWidthClick(comment: IComment, width: number) {
+  public handleBorderWidthClick(comment: IComment, width: number) {
     comment.borderWidth = width;
     if (comment.borderColor === '#0000') {
       comment.borderColor = '#000';
     }
   }
 
-  protected incrementFontSize(comment: IComment, dir: number) {
+  public incrementFontSize(comment: IComment, dir: number) {
     const newSize = Math.max(1, Math.min(200, comment.fontSize + dir));
     setFontSize(comment, newSize);
   }
 
-  protected reorder(comment: IComment, layer: CommentLayer, dir: number) {
+  public reorder(comment: IComment, layer: CommentLayer, dir: number) {
     layer.reorder(comment, dir);
   }
 
-  protected handleMousedown(comment: IComment, origEvt: MouseEvent) {
+  public handleMousedown(comment: IComment, origEvt: MouseEvent) {
     const startPos = { ...comment.position },
       { pageX, pageY } = origEvt,
       mouseup = () => {
@@ -99,12 +99,12 @@ export class CanvasTextEditorComponent {
     window.addEventListener('mouseup', mouseup);
   }
 
-  protected handleResizerMousedown(comment: IComment, evt: MouseEvent, resizer: string) {
+  public handleResizerMousedown(comment: IComment, evt: MouseEvent, resizer: string) {
     this.resizerSvc.resize(resizer, comment, evt, this.model);
     evt.stopImmediatePropagation();
   }
 
-  protected getStyle(layer: CommentLayer, comment: IComment) {
+  public getStyle(layer: CommentLayer, comment: IComment) {
     return {
       display:
         this.model.video.getCurrTimeMs() >= comment.startMs && this.model.video.getCurrTimeMs() <= comment.endMs

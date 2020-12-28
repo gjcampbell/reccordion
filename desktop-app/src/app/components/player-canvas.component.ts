@@ -37,8 +37,8 @@ import { PlayerCanvasModel } from './player-canvas.model';
 })
 export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
   private destroyed = false;
-  protected canvasWidth: number;
-  protected canvasHeight: number;
+  public canvasWidth: number;
+  public canvasHeight: number;
 
   @ViewChild('cvs')
   public cvs: ElementRef<HTMLCanvasElement>;
@@ -58,7 +58,7 @@ export class PlayerCanvasComponent implements AfterViewInit, OnDestroy {
     this.updateDim();
   }
 
-  constructor(private readonly zone: NgZone, protected readonly model: PlayerCanvasModel) {}
+  constructor(private readonly zone: NgZone, public readonly model: PlayerCanvasModel) {}
   public ngOnDestroy(): void {
     this.destroyed = true;
   }

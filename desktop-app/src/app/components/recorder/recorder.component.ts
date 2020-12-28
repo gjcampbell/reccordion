@@ -34,27 +34,27 @@ import {
 export class RecorderComponent implements AfterViewInit, OnDestroy {
   private textLayer = new CommentLayer();
   private disposer: () => void;
-  protected videoLayer: IBaseVideoLayer;
-  protected capturer?: ICapturer;
-  protected preview?: Blob | MediaStream;
-  protected stopped = false;
-  protected layers: IVideoLayer[] = [];
-  protected exporting = false;
-  protected fps = 25;
-  protected processing = false;
-  protected get isRecording() {
+  public videoLayer: IBaseVideoLayer;
+  public capturer?: ICapturer;
+  public preview?: Blob | MediaStream;
+  public stopped = false;
+  public layers: IVideoLayer[] = [];
+  public exporting = false;
+  public fps = 25;
+  public processing = false;
+  public get isRecording() {
     return !!this.capturer;
   }
-  protected get isRecordingPaused() {
+  public get isRecordingPaused() {
     return this.capturer && !this.capturer.isRecording();
   }
-  protected get isEmpty() {
+  public get isEmpty() {
     return !this.capturer && this.videoLayer.isEmpty();
   }
   @ViewChild('player')
-  protected player: PlayerComponent;
+  public player: PlayerComponent;
   @ViewChild('recordingDur')
-  protected recordingDurLabel: ElementRef<HTMLSpanElement>;
+  public recordingDurLabel: ElementRef<HTMLSpanElement>;
 
   constructor(
     private readonly recorder: RecordingService,
@@ -77,7 +77,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     this.disposer = this.updater.addUpdateListener(() => this.updateRecordingDur());
   }
 
-  protected addText() {
+  public addText() {
     this.addShape({
       text: 'Some Text',
       strokeColor: '#fff',
@@ -94,7 +94,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  protected addStar() {
+  public addStar() {
     this.addShape(
       this.shapeService.createShape(starOption, {
         fillColor: '#141518',
@@ -107,7 +107,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  protected addRect() {
+  public addRect() {
     this.addShape(
       this.shapeService.createShape(rectOption, {
         fillColor: '#000',
@@ -122,7 +122,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  protected addCircle() {
+  public addCircle() {
     this.addShape(
       this.shapeService.createShape(circleOption, {
         fillColor: '#000',
@@ -137,7 +137,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  protected addArrow() {
+  public addArrow() {
     this.addShape(
       this.shapeService.createShape(arrowOption, {
         fillColor: '#fff',
@@ -150,7 +150,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  protected addTriangle() {
+  public addTriangle() {
     this.addShape(
       this.shapeService.createShape(triangleOption, {
         fillColor: '#141518',
@@ -289,7 +289,7 @@ export class ScreenPickerDialog {
     return !!this.selected;
   }
 
-  protected startRecording = (item: ICapturable) => {
+  public startRecording = (item: ICapturable) => {
     this.selected = item;
     this.dialogRef.close(item);
   };

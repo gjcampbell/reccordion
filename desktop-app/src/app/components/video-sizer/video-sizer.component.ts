@@ -41,7 +41,7 @@ export class VideoSizerComponent {
   @Input()
   public enabled = false;
 
-  protected get pixelRatio() {
+  public get pixelRatio() {
     return window.devicePixelRatio;
   }
 

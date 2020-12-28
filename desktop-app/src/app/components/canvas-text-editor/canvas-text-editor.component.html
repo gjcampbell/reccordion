@@ -5,7 +5,11 @@
     [class.selected]="model.isSelected(comment)"
     [style]="getStyle(layer, comment)"
   >
-    <div class="comment-dragbox" (click)="handleClick(comment)" (mousedown)="handleMousedown(comment, $event)"></div>
+    <div
+      class="comment-dragbox"
+      (click)="handleClick(comment, $event)"
+      (mousedown)="handleMousedown(comment, $event)"
+    ></div>
     <ng-container *ngIf="model.isSelected(comment)">
       <div class="tools tools-top">
         <button [matMenuTriggerFor]="shapeMenu" matTooltip="Select Shape">

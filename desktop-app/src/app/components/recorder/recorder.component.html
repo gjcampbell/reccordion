@@ -36,6 +36,7 @@
     [video]="videoLayer"
     [fps]="25"
     #player
+    [style.display]="isEmpty ? 'none' : undefined"
   ></app-player>
 </ng-container>
 <app-big-overlay *ngIf="isEmpty">

@@ -4,7 +4,7 @@ import { IBaseVideoLayer, IVideo, IVideoLayer, IVideoSource, IWebMWriter, VideoT
 const WebMWriter = (window as any).WebMWriter as typeof IWebMWriter;
 
 export class BaseRendererService {
-  protected create2dCtx(video: IVideo, canvas?: HTMLCanvasElement) {
+  public create2dCtx(video: IVideo, canvas?: HTMLCanvasElement) {
     if (!canvas) {
       canvas = document.createElement('canvas');
       canvas.width = video.width;

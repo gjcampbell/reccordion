@@ -19,12 +19,12 @@ export class LayerGanttComponent implements OnDestroy, AfterViewInit {
   private disposer: () => void;
 
   @ViewChild('timeLabel', { static: true })
-  protected timeLabel: ElementRef<HTMLDivElement>;
+  public timeLabel: ElementRef<HTMLDivElement>;
   @ViewChild('totalLabel', { static: true })
-  protected totalLabel: ElementRef<HTMLDivElement>;
+  public totalLabel: ElementRef<HTMLDivElement>;
 
   constructor(
-    protected readonly canvasModel: PlayerCanvasModel,
+    public readonly canvasModel: PlayerCanvasModel,
     private readonly updater: FastNgUpdateService,
     private readonly dialog: MatDialog
   ) {}
@@ -37,7 +37,7 @@ export class LayerGanttComponent implements OnDestroy, AfterViewInit {
     this.disposer = this.updater.addUpdateListener(() => this.updateLabels());
   }
 
-  protected handleEnterDuration() {
+  public handleEnterDuration() {
     const dialog = this.dialog.open(DurationEditorDialog, { data: this.canvasModel });
     dialog.afterClosed().subscribe((durMs: number) => {
       if (durMs) {
@@ -65,7 +65,7 @@ export class LayerGanttComponent implements OnDestroy, AfterViewInit {
     }
   }
 
-  protected togglePlay() {
+  public togglePlay() {
     if (!this.canvasModel.video.isPlaying()) {
       this.canvasModel.video.play();
     } else {
@@ -73,11 +73,11 @@ export class LayerGanttComponent implements OnDestroy, AfterViewInit {
     }
   }
 
-  protected getLayers() {
+  public getLayers() {
     return this.canvasModel.layers.map((l) => this.getLayerModel(l));
   }
 
-  protected getLayerModel(layer: IVideoLayer) {
+  public getLayerModel(layer: IVideoLayer) {
     let result = this.layerModelLookup.get(layer);
     if (!result) {
       result = this.createGanttRowModel(layer);

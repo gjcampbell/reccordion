@@ -90,7 +90,7 @@ export class PlayerComponent implements AfterViewInit {
   private currentSource: MediaStream | Blob;
   public width = 720;
   public height = 480;
-  protected liveTime = '';
+  public liveTime = '';
 
   @ViewChild('time')
   public timeDisplay: ElementRef<HTMLDivElement>;
@@ -154,7 +154,7 @@ export class PlayerComponent implements AfterViewInit {
     return this.videoElementRef && this.videoElementRef.nativeElement;
   }
 
-  public constructor(private readonly zone: NgZone, protected readonly model: PlayerCanvasModel) {}
+  public constructor(private readonly zone: NgZone, public readonly model: PlayerCanvasModel) {}
 
   public ngAfterViewInit() {}
 

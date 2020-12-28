@@ -29,7 +29,9 @@ export interface GanttRow<ItemType> {
 export abstract class BaseGanttRow<T extends { startMs: number; endMs: number }> implements GanttRow<T> {
   public abstract canReorderItems: boolean;
   public multiRow = false;
-  public show = true;
+  public get show() {
+    return true;
+  }
   public abstract getType(): string;
   public abstract getItems(): T[];
   public abstract getLabel(item: T): string;
@@ -110,9 +112,7 @@ export class VideoGanttRow extends BaseGanttRow<VideoTimeRange> {
 
 export class FrameSeriesGanttRow extends BaseGanttRow<FrameSeries> {
   public canReorderItems = false;
-  public get show() {
-    return this.layer.getSeries().length > 0;
-  }
+
   constructor(private readonly layer: FrameSeriesLayer) {
     super();
   }
@@ -206,7 +206,7 @@ export class GanttRowComponent {
   constructor(private readonly canvasModel: PlayerCanvasModel) {}
 
   @HostListener('window:resize')
-  protected handleResize() {
+  public handleResize() {
     this.containerWidth = undefined;
   }
 
@@ -218,7 +218,7 @@ export class GanttRowComponent {
     this.canvasModel.select(value);
   }
 
-  protected handleItemMseDown(orig: MouseEvent, item: any) {
+  public handleItemMseDown(orig: MouseEvent, item: any) {
     const init = this.getInitDim(orig, item),
       maxX = init.containerW - init.item.w,
       widthMs = init.endMs - init.startMs,
@@ -242,7 +242,7 @@ export class GanttRowComponent {
     window.addEventListener('mousemove', mousemove);
   }
 
-  protected handleLeftMseDown(orig: MouseEvent, item: any) {
+  public handleLeftMseDown(orig: MouseEvent, item: any) {
     const init = this.getInitDim(orig, item),
       maxX = init.item.w + init.item.x,
       mousemove = (evt: MouseEvent) => {
@@ -263,7 +263,7 @@ export class GanttRowComponent {
     orig.stopImmediatePropagation();
   }
 
-  protected handleRightMseDown(orig: MouseEvent, item: any) {
+  public handleRightMseDown(orig: MouseEvent, item: any) {
     const init = this.getInitDim(orig, item),
       maxW = init.containerW - init.item.x,
       mousemove = (evt: MouseEvent) => {
@@ -299,11 +299,11 @@ export class GanttRowComponent {
     };
   }
 
-  protected getItemClass(item: any) {
+  public getItemClass(item: any) {
     return `item-type-${this.model.getItemType(item)}`;
   }
 
-  protected getItemStyle(item: any) {
+  public getItemStyle(item: any) {
     const startMs = this.model.getStartMs(item),
       endMs = this.model.getEndMs(item),
       totalDur = this.canvasModel.video.getDurationMs(),

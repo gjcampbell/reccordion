@@ -50,10 +50,10 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
   ],
 })
 export class DurationEditorDialog {
-  protected seconds: number;
-  protected minutes: number;
+  public seconds: number;
+  public minutes: number;
 
-  protected get canApply() {
+  public get canApply() {
     return this.getDurationMs() > 0;
   }
   constructor(
@@ -62,13 +62,13 @@ export class DurationEditorDialog {
   ) {
     this.dialogRef.afterOpened().subscribe(() => this.loadCurrentDur());
   }
-  protected done() {
+  public done() {
     this.dialogRef.close(this.getDurationMs());
   }
-  protected cancel() {
+  public cancel() {
     this.dialogRef.close();
   }
-  protected getDuration() {
+  public getDuration() {
     return this.model.formatAsFrame(this.getDurationMs());
   }
   private getDurationMs() {

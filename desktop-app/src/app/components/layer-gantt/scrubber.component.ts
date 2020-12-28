@@ -23,7 +23,7 @@ import { PlayerCanvasModel } from '../player-canvas.model';
   styleUrls: ['./scrubber.component.scss'],
 })
 export class ScrubberComponent implements AfterViewInit, OnDestroy {
-  protected hpadding = 16;
+  public hpadding = 16;
   private disposer: () => void;
   private expectedDurMs = 0;
   private expectedWidth = 0;
@@ -38,10 +38,10 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
   }
 
   @ViewChild('bar', { static: true })
-  protected bar: ElementRef<HTMLDivElement>;
+  public bar: ElementRef<HTMLDivElement>;
 
   @ViewChild('container', { static: true })
-  protected container: ElementRef<HTMLDivElement>;
+  public container: ElementRef<HTMLDivElement>;
 
   constructor(private readonly canvasModel: PlayerCanvasModel, private readonly updater: FastNgUpdateService) {}
 
@@ -72,7 +72,7 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
     return this.expectedWidth;
   }
 
-  protected getSeekbarBg() {
+  public getSeekbarBg() {
     if (this.expectedDurMs !== this.video.getDurationMs() || this.expectedWidth === 0) {
       const width = this.getContainerWidth(),
         durMs = this.video.getDurationMs(),
@@ -92,16 +92,16 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
     return this.cachedBg;
   }
 
-  protected getBarPos() {
+  public getBarPos() {
     const snappedFrame = this.canvasModel.snapMsToFrame(this.video.getCurrTimeMs());
     return (snappedFrame / this.video.getDurationMs()) * 100 + '%';
   }
 
-  protected handleBarClick(evt: MouseEvent) {
+  public handleBarClick(evt: MouseEvent) {
     evt.stopImmediatePropagation();
   }
 
-  protected handleContainerClick(evt: MouseEvent & { target: HTMLDivElement }) {
+  public handleContainerClick(evt: MouseEvent & { target: HTMLDivElement }) {
     const width = this.getContainerWidth(),
       x = evt.offsetX,
       dur = this.video.getDurationMs(),
@@ -111,7 +111,7 @@ export class ScrubberComponent implements AfterViewInit, OnDestroy {
     this.video.seek(seekMs);
   }
 
-  protected handleBarMouseDown(evt: MouseEvent) {
+  public handleBarMouseDown(evt: MouseEvent) {
     const width = this.getContainerWidth(),
       startX = evt.pageX,
       dur = this.video.getDurationMs(),

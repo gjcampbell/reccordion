@@ -20,6 +20,8 @@
 </div>
 <div class="layers">
   <div class="layer" *ngFor="let layer of canvasModel.layers">
-    <app-gantt-row [model]="getLayerModel(layer)"></app-gantt-row>
+    <ng-container *ngFor="let model of [getLayerModel(layer)]">
+      <app-gantt-row *ngIf="model.show" [model]="model"></app-gantt-row>
+    </ng-container>
   </div>
 </div>

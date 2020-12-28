@@ -21,7 +21,7 @@
   ],
   "extraResources": ["extraResources/**.*"],
   "win": {
-    "icon": "dist/assets/icons",
+    "icon": "dist/assets/icons/icon.png",
     "target": ["portable"]
   },
   "mac": {

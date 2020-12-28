@@ -7,3 +7,24 @@ body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+#splash {
+  background: #000;
+  width: 100%;
+  height: 100%;
+  filter: hue-rotate(270deg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  img {
+    width: 375px;
+    animation: fadeIn 1s infinite alternate;
+  }
+}

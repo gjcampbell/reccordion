@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { ElectronService } from './services/electron.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AppConfig } from '../environments/environment';
@@ -8,7 +8,7 @@ import { AppConfig } from '../environments/environment';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit {
   constructor(private electronService: ElectronService, private translate: TranslateService) {
     this.translate.setDefaultLang('en');
     console.log('AppConfig', AppConfig);
@@ -21,5 +21,9 @@ export class AppComponent {
     } else {
       console.log('Run in browser');
     }
+  }
+
+  public ngAfterViewInit() {
+    document.getElementById('splash').remove();
   }
 }
