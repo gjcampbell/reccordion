@@ -1,9 +1,11 @@
-const customTitlebar = require('custom-electron-titlebar');
+const path = require('path'),
+  url = require('url'),
+  customTitlebar = require('custom-electron-titlebar');
 
 window.addEventListener('DOMContentLoaded', () => {
   new customTitlebar.Titlebar({
     backgroundColor: customTitlebar.Color.fromHex('#101010'),
-    icon: url.format(path.join(__dirname, '/images', '/icon.png')),
+    menu: null
   });
 
 

@@ -15,11 +15,10 @@ function createWindow(): BrowserWindow {
     x: 0,
     y: 0,
     width: 1000,
-    height: 600,
+    height: 750,
     titleBarStyle: 'hidden',
     frame: false,
     webPreferences: {
-      preload: path.join(__dirname, 'extraResources/titlebar.js'),
       nodeIntegration: true,
       allowRunningInsecureContent: serve ? true : false,
       contextIsolation: false, // false if you want to run 2e2 test with Spectron
