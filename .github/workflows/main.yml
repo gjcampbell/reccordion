@@ -33,9 +33,7 @@ jobs:
         id: build
         shell: powershell
         working-directory: ./desktop-app
-        run: |
-          npm run electron:build
-          echo "::set-output name=portable_name::$env:PORTABLE_EXECUTABLE_APP_FILENAME"
+        run: npm run electron:build
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -46,10 +44,17 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: Upload Release Assets
+      - name: Upload Portable
         uses: actions/upload-release-asset@v1.0.2
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./desktop-app/release/${{ steps.build.outputs.portable_name }}
-          asset_name: ${{ steps.build.outputs.portable_name }}
+          asset_path: ./desktop-app/release/reccordion-portable.exe
+          asset_name: reccordion-portable.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+      - name: Upload Installer
+        uses: actions/upload-release-asset@v1.0.2
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./desktop-app/release/reccordion-installer.exe
+          asset_name: reccordion-installer.exe
           asset_content_type: application/vnd.microsoft.portable-executable
