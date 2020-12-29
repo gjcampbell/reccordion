@@ -33,6 +33,25 @@ export class ConverterService implements IFrameExtractor {
     await this.electron.cmd(cmd, gifArgs);
   }
 
+  public async convertFramesToWebm(frames: AsyncIterableIterator<Blob>, gifPath: string) {
+    const framePath = this.electron.tempDirPath(),
+      webmPath = this.electron.tempFilePath('webm'),
+      webmArgs = ['-i', `"${framePath}\\frame-%05d.webp"`, `"${webmPath}"`];
+    this.electron.mkDir(framePath);
+
+    let index = 0;
+    for await (const frame of frames) {
+      await this.electron.saveBlob(
+        frame,
+        this.electron.pathJoin(framePath, `frame-${index.toString().padStart(5, '0')}.webp`)
+      );
+      index++;
+    }
+
+    await this.electron.cmd(this.ffmpegPath, webmArgs);
+    await this.convertToGif(webmPath, gifPath);
+  }
+
   public async extractFrames(webmBlob: Blob, fps: number = 25): Promise<{ files: string[]; blobs: Blob[] }> {
     const dir = this.electron.tempDirPath(),
       webmPath = this.electron.tempFilePath('webm'),

@@ -202,6 +202,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
         quality: 0.99999,
         width: this.player.width,
         height: this.player.height,
+        frameRate: 25,
         durationMs: this.videoLayer.getDurationMs(),
         layers: [this.videoLayer, this.textLayer],
       },
@@ -340,6 +341,23 @@ export class ExportDialog implements AfterViewInit {
   }
 
   private async export() {
+    this.status = 'Rendering';
+    const frames = this.renderer.createFrames(this.video.layers[0] as IBaseVideoLayer, this.video, (percent) => {
+      this.percent = (percent * 100).toFixed(0) + '%';
+      return !this.canceled;
+    });
+
+    const saveResult = await this.electron.remote.dialog.showSaveDialog(null, {
+      filters: [{ name: 'Gif', extensions: ['gif'] }],
+    });
+    if (saveResult.canceled) {
+      this.close();
+    } else {
+      await this.converter.convertFramesToWebm(frames, saveResult.filePath);
+      this.close();
+    }
+  }
+  private async exportWithWebmWriter() {
     this.status = 'Rendering';
     const blob = await this.renderer.render(this.video.layers[0] as IBaseVideoLayer, this.video, (percent) => {
         this.percent = (percent * 100).toFixed(0) + '%';

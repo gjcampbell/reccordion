@@ -6,7 +6,7 @@ declare var MediaRecorder: {
    * https://developer.mozilla.org/en-US/docs/Web/Media/Formats/codecs_parameter
    *
    */
-  new (stream: MediaStream, options: { mimeType: 'video/webm' }): MediaRecorder;
+  new (stream: MediaStream, options: { mimeType: string; videoBitsPerSecond: number }): MediaRecorder;
   start(): void;
   stop(): void;
   pause(): void;
@@ -48,7 +48,10 @@ export class RecordingService {
           },
         } as any,
       }),
-      videoRecorder = new MediaRecorder(videoStream, { mimeType: 'video/webm' });
+      videoRecorder = new MediaRecorder(videoStream, {
+        mimeType: 'video/webm;codecs="vp8"',
+        videoBitsPerSecond: 2500000,
+      });
 
     return this.createCapturer(videoRecorder, view.name, view.iconUrl);
   }

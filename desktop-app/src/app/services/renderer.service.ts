@@ -28,7 +28,7 @@ export class ReqRendererService extends BaseRendererService {
       frameRate = video.frameRate || 25,
       writer = new WebMWriter({ quality: video.quality || 0.99999, frameRate });
 
-    ctx.scale(1 / window.devicePixelRatio, 1 / window.devicePixelRatio);
+    //ctx.scale(1 / window.devicePixelRatio, 1 / window.devicePixelRatio);
     const frames = await this.getFrames(rootVideo, video, ctx, progress);
 
     if (frames) {
@@ -69,6 +69,30 @@ export class ReqRendererService extends BaseRendererService {
 
     return !canceled ? frameBlobs : undefined;
   }
+  public async *createFrames(
+    rootVideo: IBaseVideoLayer,
+    video: IVideo,
+    progress: (percent: number, stage: string) => boolean
+  ) {
+    let canceled = false;
+    const ctx = this.create2dCtx(video),
+      frameRate = video.frameRate || 25,
+      frameDur = 1000 / frameRate;
+
+    for (let mills = 0; mills <= rootVideo.getDurationMs(); mills += frameDur) {
+      ctx.fillRect(0, 0, video.width, video.height);
+      for (const layer of video.layers) {
+        await layer.drawFrame(mills, ctx);
+      }
+      canceled = !progress(mills / video.durationMs, '');
+      if (canceled) {
+        break;
+      } else {
+        yield await this.getBlob(ctx, video.quality);
+      }
+    }
+  }
+
   private getBlob(ctx: CanvasRenderingContext2D, quality: number) {
     return new Promise<Blob>((resolve) => {
       ctx.canvas.toBlob(resolve, 'image/webp', quality);
