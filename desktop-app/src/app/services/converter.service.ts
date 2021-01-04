@@ -2,15 +2,22 @@ import { Injectable } from '@angular/core';
 import { ElectronService } from './electron.service';
 import { AppConfig } from './../../environments/environment';
 import { IFrameExtractor } from './interfaces';
+import * as GIF from 'gif.js';
 
 @Injectable()
 export class ConverterService implements IFrameExtractor {
-  private ffmpegPath: string;
+  private readonly ffmpegPath: string;
+  private readonly gifskiPath: string;
 
   constructor(private readonly electron: ElectronService) {
-    this.ffmpegPath = AppConfig.production
-      ? this.electron.path.join(this.electron.getResourcePath(), `extraResources`, `ffmpeg.exe`)
-      : this.electron.path.resolve(this.electron.getResourcePath(), './../../../../extraResources/ffmpeg.exe');
+    this.ffmpegPath = this.getResourcePath('ffmpeg.exe');
+    this.gifskiPath = this.getResourcePath('gifski.exe');
+  }
+
+  private getResourcePath(resource: string) {
+    return AppConfig.production
+      ? this.electron.path.join(this.electron.getResourcePath(), `extraResources/${resource}`)
+      : this.electron.path.resolve(this.electron.getResourcePath(), `./../../../../extraResources/${resource}`);
   }
 
   public async convertToGif(inputWebmPath: string, gifPath: string) {
@@ -33,23 +40,106 @@ export class ConverterService implements IFrameExtractor {
     await this.electron.cmd(cmd, gifArgs);
   }
 
-  public async convertFramesToWebm(frames: AsyncIterableIterator<Blob>, gifPath: string) {
-    const framePath = this.electron.tempDirPath(),
-      webmPath = this.electron.tempFilePath('webm'),
-      webmArgs = ['-i', `"${framePath}\\frame-%05d.webp"`, `"${webmPath}"`];
+  public async saveFrames(frames: AsyncIterableIterator<Blob>) {
+    const framePath = this.electron.tempDirPath();
     this.electron.mkDir(framePath);
 
     let index = 0;
     for await (const frame of frames) {
-      await this.electron.saveBlob(
-        frame,
-        this.electron.pathJoin(framePath, `frame-${index.toString().padStart(5, '0')}.webp`)
-      );
+      const frameFileName = `frame-${index.toString().padStart(5, '0')}.png`,
+        path = this.electron.pathJoin(framePath, frameFileName);
+      await this.electron.saveBlob(frame, path);
       index++;
     }
 
-    await this.electron.cmd(this.ffmpegPath, webmArgs);
+    return framePath;
+  }
+
+  /**
+   * GIF.JS creates flickery gifs
+   */
+  public async convertEnumerableCtxToGif(
+    frames: AsyncIterableIterator<CanvasRenderingContext2D>,
+    fps: number,
+    gifPath: string,
+    width: number,
+    height: number
+  ): Promise<void> {
+    const frameMills = 1000 / fps,
+      gif = new GIF({
+        quality: 10,
+        width,
+        height,
+        workerScript: 'assets/gif.worker.js',
+      });
+    const dump = this.electron.tempDirPath();
+    this.electron.mkDir(dump);
+
+    for await (const frame of frames) {
+      gif.addFrame(frame, { delay: frameMills, copy: true });
+    }
+    return new Promise((resolve) => {
+      gif.on('finished', (blob) => {
+        this.electron.saveBlob(blob, gifPath).then(resolve);
+        resolve();
+      });
+      gif.on('progress', (pct) => {
+        console.log(pct);
+      });
+      gif.render();
+    });
+  }
+  private getFrame(ctx: CanvasRenderingContext2D): Promise<Blob> {
+    return new Promise((r) => {
+      ctx.canvas.toBlob(r, 'image/png');
+    });
+  }
+
+  public async convertFramesToWebmToGif(framePath: string, gifPath: string, width: number) {
+    const webmPath = this.electron.tempFilePath('webm'),
+      webmArgs = ['-i', `"${framePath}\\frame-%05d.png"`, '-vf', `scale=${width}:-1`, `"${webmPath}"`];
+
+    await this.electron.cmd(this.ffmpegPath, webmArgs, './');
     await this.convertToGif(webmPath, gifPath);
+  }
+
+  public async convertFramesToWebm(framePath: string, webmPath: string, width: number) {
+    const webmArgs = ['-i', `"${framePath}\\frame-%05d.png"`, '-vf', `scale=${width}:-1`, `"${webmPath}"`];
+
+    await this.electron.cmd(this.ffmpegPath, webmArgs, './');
+  }
+
+  public async convertEnumerableCtxToFrames(frames: AsyncIterableIterator<CanvasRenderingContext2D>) {
+    const framesDir = this.electron.tempDirPath();
+    await this.electron.mkDir(framesDir);
+    let i = 0;
+    for await (const frame of frames) {
+      const path = this.electron.pathJoin(framesDir, `frame-${i.toString().padStart(5, '0')}.png`),
+        imgBlob = await this.getFrame(frame);
+
+      this.electron.saveBlob(imgBlob, path);
+      i++;
+    }
+    return framesDir;
+  }
+
+  public async convertFramesToGif(
+    framesDir: string,
+    fps: number,
+    gifPath: string,
+    width: number,
+    fast: boolean,
+    quality: number = 100
+  ) {
+    const args = ['-o', `"${gifPath}"`, `--fps ${fps}`, `-W ${width}`, 'frame-*.png'];
+    if (fast) {
+      args.push('--fast');
+    }
+    if (quality !== 100) {
+      args.push(`--quality ${quality}`);
+    }
+
+    await this.electron.cmd(this.gifskiPath, args, framesDir);
   }
 
   public async extractFrames(webmBlob: Blob, fps: number = 25): Promise<{ files: string[]; blobs: Blob[] }> {

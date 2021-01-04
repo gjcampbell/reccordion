@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IBaseVideoLayer, IVideo, IVideoLayer, IVideoSource, IWebMWriter, VideoTimeRanges } from './video.models';
+import { IBaseVideoLayer, IVideo, IVideoSource, IWebMWriter, VideoTimeRanges } from './video.models';
 
 const WebMWriter = (window as any).WebMWriter as typeof IWebMWriter;
 
@@ -7,8 +7,8 @@ export class BaseRendererService {
   public create2dCtx(video: IVideo, canvas?: HTMLCanvasElement) {
     if (!canvas) {
       canvas = document.createElement('canvas');
-      canvas.width = video.width;
-      canvas.height = video.height;
+      canvas.width = video.width * window.devicePixelRatio;
+      canvas.height = video.height * window.devicePixelRatio;
     }
 
     const result = canvas.getContext('2d');
@@ -28,7 +28,6 @@ export class ReqRendererService extends BaseRendererService {
       frameRate = video.frameRate || 25,
       writer = new WebMWriter({ quality: video.quality || 0.99999, frameRate });
 
-    //ctx.scale(1 / window.devicePixelRatio, 1 / window.devicePixelRatio);
     const frames = await this.getFrames(rootVideo, video, ctx, progress);
 
     if (frames) {
@@ -74,11 +73,21 @@ export class ReqRendererService extends BaseRendererService {
     video: IVideo,
     progress: (percent: number, stage: string) => boolean
   ) {
+    for await (const ctx of this.createCtxStream(rootVideo, video, progress)) {
+      yield await this.getBlob(ctx, video.quality);
+    }
+  }
+  public async *createCtxStream(
+    rootVideo: IBaseVideoLayer,
+    video: IVideo,
+    progress: (percent: number, stage: string) => boolean
+  ) {
     let canceled = false;
     const ctx = this.create2dCtx(video),
       frameRate = video.frameRate || 25,
       frameDur = 1000 / frameRate;
 
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     for (let mills = 0; mills <= rootVideo.getDurationMs(); mills += frameDur) {
       ctx.fillRect(0, 0, video.width, video.height);
       for (const layer of video.layers) {
@@ -88,14 +97,14 @@ export class ReqRendererService extends BaseRendererService {
       if (canceled) {
         break;
       } else {
-        yield await this.getBlob(ctx, video.quality);
+        yield ctx;
       }
     }
   }
 
   private getBlob(ctx: CanvasRenderingContext2D, quality: number) {
     return new Promise<Blob>((resolve) => {
-      ctx.canvas.toBlob(resolve, 'image/webp', quality);
+      ctx.canvas.toBlob(resolve, 'image/png', quality);
     });
   }
 }

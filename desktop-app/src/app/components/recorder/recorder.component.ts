@@ -1,4 +1,13 @@
-import { AfterViewInit, Component, ElementRef, Inject, ViewChild, OnDestroy } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Inject,
+  ViewChild,
+  OnDestroy,
+  ChangeDetectorRef,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ConverterService } from 'app/services/converter.service';
 import { ElectronService } from 'app/services/electron.service';
@@ -206,6 +215,7 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
         durationMs: this.videoLayer.getDurationMs(),
         layers: [this.videoLayer, this.textLayer],
       },
+      disableClose: true,
     });
     this.exporting = true;
     dialogRef.afterClosed().subscribe(() => (this.exporting = false));
@@ -317,17 +327,64 @@ export class ScreenPickerDialog {
 
 @Component({
   template: `
-    <div mat-dialog-content>{{ status }} {{ percent }}</div>
+    <div mat-dialog-content class="export-body">
+      <div *ngIf="!processing && !done" class="type-picker">
+        <div class="big-button">
+          <div class="main" (click)="exportGif(false)">
+            <div class="icon icon-gif"></div>
+            <div class="mat-caption text">
+              Lower quality, takes a while to generate, supported by most tools, recommended for
+              <strong>Outlook, Teams, Azure Devops</strong>
+            </div>
+          </div>
+          <div (click)="exportGif(true)">
+            <div class="title">Quicker GIF</div>
+            <div class="mat-caption text">Slightly lower quality, but much faster to generate</div>
+          </div>
+        </div>
+        <div class="big-button" (click)="exportWebm()">
+          <div class="main">
+            <div class="icon icon-webm"></div>
+            <div class="mat-caption text">
+              Smaller file, quicker, higher quality, recommended for <strong>Discord</strong> or
+              <strong>Long Videos</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="processing">
+        <div class="processing-status">{{ status }} {{ percent }}</div>
+        <ng-container *ngIf="percent === '' && processing">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </ng-container>
+      </div>
+      <div *ngIf="done" class="ready">
+        <div class="big-button" (click)="save()">
+          <i class="fa fa-fw fa-save"></i>
+          <div class="title">Save {{ outputType?.name }}</div>
+          <div class="mat-caption text">Save the recording to your computer</div>
+        </div>
+        <div class="big-button" draggable="true" (dragstart)="handleDragStart($event)">
+          <i class="fa fa-fw fa-hand-rock"></i>
+          <div class="title">Drag the {{ outputType?.name }}</div>
+          <div class="mat-caption text">Share the recording by dragging it to other apps</div>
+        </div>
+      </div>
+    </div>
     <div mat-dialog-actions align="end">
       <button mat-button (click)="close()">Cancel</button>
     </div>
   `,
+  styleUrls: ['./export-dialog.component.scss'],
 })
 export class ExportDialog implements AfterViewInit {
   public done = false;
   public percent = '';
   public status = '';
   public canceled = false;
+  private tempOutputPath: string;
+  public outputType: { name: string; type: string; ext: string };
+  public processing = false;
   constructor(
     private readonly dialogRef: MatDialogRef<ExportDialog>,
     private readonly renderer: ReqRendererService,
@@ -337,27 +394,104 @@ export class ExportDialog implements AfterViewInit {
   ) {}
 
   public ngAfterViewInit() {
-    this.export();
+    //this.dialogRef.backdropClick().subscribe(() => (this.canceled = true));
   }
 
-  private async export() {
-    this.status = 'Rendering';
-    const frames = this.renderer.createFrames(this.video.layers[0] as IBaseVideoLayer, this.video, (percent) => {
-      this.percent = (percent * 100).toFixed(0) + '%';
-      return !this.canceled;
-    });
+  private updatePercent = (percent) => {
+    this.percent = (percent * 100).toFixed(0) + '%';
+    return !this.canceled;
+  };
 
+  public async exportGif(fast: boolean) {
+    this.processing = false;
+    this.outputType = { name: 'GIF', ext: 'gif', type: 'image/gif' };
+    this.status = 'Rendering Frames';
+    const frames = this.renderer.createCtxStream(
+        this.video.layers[0] as IBaseVideoLayer,
+        this.video,
+        this.updatePercent
+      ),
+      framesDir = await this.converter.convertEnumerableCtxToFrames(frames);
+    this.tempOutputPath = this.electron.tempFilePath('gif');
+    await this.converter.convertFramesToGif(
+      framesDir,
+      this.video.frameRate || 25,
+      this.tempOutputPath,
+      this.video.width,
+      fast
+    );
+    this.processing = false;
+    this.done = true;
+  }
+  public async exportWebm() {
+    this.processing = true;
+    this.outputType = { name: 'WebM', ext: 'webm', type: 'video/webm' };
+    this.status = 'Rendering Frames';
+    const frames = this.renderer.createCtxStream(
+        this.video.layers[0] as IBaseVideoLayer,
+        this.video,
+        this.updatePercent
+      ),
+      framesDir = await this.converter.convertEnumerableCtxToFrames(frames);
+
+    this.tempOutputPath = this.electron.tempFilePath('webm');
+    await this.converter.convertFramesToWebm(framesDir, this.tempOutputPath, this.video.width);
+    this.processing = false;
+    this.done = true;
+  }
+
+  private async exportWithGifJs() {
+    this.processing = true;
+    this.status = 'Rendering Frames';
+    const frames = this.renderer.createCtxStream(
+      this.video.layers[0] as IBaseVideoLayer,
+      this.video,
+      this.updatePercent
+    );
+    this.tempOutputPath = this.electron.tempFilePath('gif');
+    await this.converter.convertEnumerableCtxToGif(
+      frames,
+      this.video.frameRate || 25,
+      this.tempOutputPath,
+      this.video.width,
+      this.video.height
+    );
+    this.processing = false;
+  }
+
+  private async exportWithFfmpeg() {
+    this.processing = true;
+    this.status = 'Rendering Frames';
+    const frames = this.renderer.createFrames(this.video.layers[0] as IBaseVideoLayer, this.video, this.updatePercent);
+    const framesDir = await this.converter.saveFrames(frames);
+    if (!this.canceled) {
+      this.status = 'Creating Gif';
+      this.percent = '';
+      this.tempOutputPath = this.electron.tempFilePath('gif');
+      await this.converter.convertFramesToWebmToGif(framesDir, this.tempOutputPath, this.video.width);
+    }
+    this.processing = false;
+  }
+
+  public async save() {
     const saveResult = await this.electron.remote.dialog.showSaveDialog(null, {
-      filters: [{ name: 'Gif', extensions: ['gif'] }],
+      filters: [{ name: this.outputType.name, extensions: [this.outputType.ext] }],
     });
-    if (saveResult.canceled) {
-      this.close();
-    } else {
-      await this.converter.convertFramesToWebm(frames, saveResult.filePath);
-      this.close();
+    if (!saveResult.canceled) {
+      this.electron.copyFile(this.tempOutputPath, saveResult.filePath);
     }
   }
-  private async exportWithWebmWriter() {
+  public async handleDragStart(evt: DragEvent) {
+    evt.preventDefault();
+    this.electron.ipcRenderer.send('ondragstart', this.tempOutputPath);
+  }
+
+  public async copyGif() {
+    const blob = this.electron.loadBlob(this.tempOutputPath, { type: 'image/gif' }),
+      buffer = await blob.arrayBuffer();
+    console.log(blob, buffer);
+  }
+  public async exportWithWebmWriter() {
     this.status = 'Rendering';
     const blob = await this.renderer.render(this.video.layers[0] as IBaseVideoLayer, this.video, (percent) => {
         this.percent = (percent * 100).toFixed(0) + '%';

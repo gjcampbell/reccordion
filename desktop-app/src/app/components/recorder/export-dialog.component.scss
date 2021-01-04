@@ -1,0 +1,60 @@
+@import '../../../theme.scss';
+
+.big-button {
+  margin: 0;
+  cursor: pointer;
+  text-align: center;
+  transition: 0.2s;
+  display: flex;
+  flex-direction: column;
+  max-width: 300px;
+  &:last-child {
+    border-left: dashed;
+  }
+  > div {
+    padding: 1rem 0;
+  }
+  > div:hover {
+    background: #fdf2ff40;
+  }
+  .main {
+    flex: 1 1 auto;
+  }
+  i {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+  .icon-webm {
+    background-image: url($iconWebm);
+  }
+  .icon-gif {
+    background-image: url($iconGif);
+  }
+  .icon {
+    display: inline-block;
+    width: 150px;
+    height: 150px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: contain;
+  }
+  .text {
+    padding: 0 1rem;
+  }
+}
+
+.type-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.export-body {
+  min-width: 400px;
+}
+.processing-status {
+  font-size: 1.25rem;
+}
+.ready {
+  display: flex;
+  justify-content: space-evenly;
+}

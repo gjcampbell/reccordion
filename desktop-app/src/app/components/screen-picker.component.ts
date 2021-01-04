@@ -52,11 +52,10 @@ import { RecordingService } from '../services/recording.service';
         cursor: pointer;
         display: grid;
       }
-      .screen:hover {
-        outline: solid 5px #0068;
-      }
+      .screen:hover,
       .screen.selected {
-        outline: solid 5px #006;
+        outline: solid 11px #fff2;
+        background: #fff2;
       }
       .screen-icon {
         display: grid;

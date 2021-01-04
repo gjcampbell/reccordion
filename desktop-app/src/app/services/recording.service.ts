@@ -15,6 +15,9 @@ declare var MediaRecorder: {
   onstop: () => void;
 };
 
+const kbps = 1024,
+  mbps = kbps * kbps;
+
 @Injectable()
 export class RecordingService {
   public constructor(private readonly electron: ElectronService) {}
@@ -49,8 +52,8 @@ export class RecordingService {
         } as any,
       }),
       videoRecorder = new MediaRecorder(videoStream, {
-        mimeType: 'video/webm;codecs="vp8"',
-        videoBitsPerSecond: 2500000,
+        mimeType: 'video/webm;codecs="vp9"',
+        videoBitsPerSecond: 4 * mbps,
       });
 
     return this.createCapturer(videoRecorder, view.name, view.iconUrl);

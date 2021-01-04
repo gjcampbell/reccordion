@@ -8,6 +8,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 } from 'uuid';
+import { threadId } from 'worker_threads';
+import { StdioOptions } from 'child_process';
 
 @Injectable({
   providedIn: 'root',
@@ -77,16 +79,19 @@ export class ElectronService {
     this.fs.mkdirSync(dir);
   }
 
+  public copyFile(source: string, dest: string) {
+    this.fs.copyFileSync(source, dest);
+  }
+
   public loadBlob(path: string, props: { type: string }) {
     const fileBuff = this.fs.readFileSync(path);
     return new Blob([fileBuff], props);
   }
 
   public async saveBlob(blob: Blob, path: string) {
-    return new Promise((resolver) => {
+    return new Promise<void>((resolver) => {
       const reader = new FileReader();
       reader.onload = () => {
-        console.log(reader);
         if (reader.readyState === 2) {
           const buffer = Buffer.from(reader.result as ArrayBuffer);
           this.fs.writeFileSync(path, buffer);
@@ -97,18 +102,52 @@ export class ElectronService {
     });
   }
 
-  public cmd(cmd: string, args: string[]): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const buff = this.childProcess.spawnSync(cmd, args, { windowsVerbatimArguments: true });
-      if (buff.status !== 0) {
-        const decoder = new TextDecoder('utf-8'),
-          message = decoder.decode(buff.stderr);
+  public cmd(cmd: string, args: string[], cwd: string = undefined): Promise<boolean> {
+    return new Promise<boolean>(async (resolve, reject) => {
+      this.childProcess.spawnSync(cmd, args, {
+        windowsVerbatimArguments: true,
+        cwd,
+      });
+      resolve(true);
+    });
+  }
 
-        console.log(`cmd error ${cmd} ${args.join(' ')}`, message);
-        reject(`exit code: ${buff.status}`);
-      } else {
-        resolve();
-      }
+  public cmdTryingToReadStdoutProgress(
+    cmd: string,
+    args: string[],
+    cwd: string = undefined,
+    progress: (message: string) => void = undefined
+  ): Promise<boolean> {
+    return new Promise<boolean>(async (resolve, reject) => {
+      const child = this.childProcess.spawn(cmd, args, {
+          windowsVerbatimArguments: true,
+          cwd,
+          shell: true,
+        }),
+        reportProgress = (chunk: Buffer) => {
+          const message = chunk.toString('utf-8');
+          if (progress) {
+            progress(message);
+          }
+          console.log(message);
+        },
+        progressTo = setInterval(() => {
+          console.log(child);
+        }, 1000),
+        done = (result: boolean) => {
+          clearInterval(progressTo);
+          resolve(result);
+        };
+
+      child
+        .on('exit', (code) => done(code === 0))
+        .on('error', (err) => {
+          console.error(err);
+          done(false);
+        });
+
+      child.stdout.on('data', reportProgress);
+      child.stderr.on('data', reportProgress);
     });
   }
 }
