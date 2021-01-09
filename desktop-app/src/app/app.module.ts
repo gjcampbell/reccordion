@@ -22,7 +22,12 @@ import { AppComponent } from './app.component';
 import { CanvasTextEditorComponent } from './components/canvas-text-editor/canvas-text-editor.component';
 import { BigOverlayComponent } from './components/big-overlay/big-overlay.component';
 import { DurationEditorDialog } from './components/layer-gantt/duration-editor-dialog.component';
-import { ExportDialog, RecorderComponent, ScreenPickerDialog } from './components/recorder/recorder.component';
+import {
+  ExportDialog,
+  ExportPreviewComponent,
+  RecorderComponent,
+  ScreenPickerDialog,
+} from './components/recorder/recorder.component';
 import { GanttRowComponent } from './components/layer-gantt/gantt-row.component';
 import { LayerGanttComponent } from './components/layer-gantt/layer-gantt.component';
 import { PlayerCanvasComponent } from './components/player-canvas.component';
@@ -53,6 +58,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     CanvasTextEditorComponent,
     DurationEditorDialog,
     ExportDialog,
+    ExportPreviewComponent,
     GanttRowComponent,
     LayerGanttComponent,
     PlayerCanvasComponent,

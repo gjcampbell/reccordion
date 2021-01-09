@@ -1,0 +1,64 @@
+<div mat-dialog-content class="export-body">
+  <div *ngIf="!processing && !done" class="type-picker">
+    <div class="big-button">
+      <div class="main" (click)="exportGif(false)">
+        <div class="icon icon-gif"></div>
+        <div class="mat-caption text">
+          Lower quality, takes a while to generate, supported by most tools, recommended for
+          <strong>Outlook, Teams, Azure Devops</strong>
+        </div>
+      </div>
+      <div (click)="exportGif(true)">
+        <div class="title">Quicker GIF</div>
+        <div class="mat-caption text">Slightly lower quality, but much faster to generate</div>
+      </div>
+    </div>
+    <div class="big-button" (click)="exportWebm()">
+      <div class="main">
+        <div class="icon icon-webm"></div>
+        <div class="mat-caption text">
+          Smaller file, quicker, higher quality, recommended for <strong>Discord</strong> or
+          <strong>Long Videos</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="processing">
+    <div
+      class="processing-step"
+      *ngFor="let step of processingSteps; index as i"
+      [class.started]="step.started"
+      [class.done]="step.done"
+    >
+      <div class="step-label">{{ i + 1 + '. ' + step.step }}</div>
+      <div class="step-status">{{ getStepStatus(step) }}</div>
+      <ng-container *ngIf="step.started && step.estimatedWait">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </ng-container>
+    </div>
+  </div>
+  <div *ngIf="done" class="ready">
+    <div class="big-button" (click)="save()">
+      <div class="main">
+        <i class="fa fa-fw fa-save"></i>
+        <div class="title">Save {{ outputType?.name }}</div>
+        <div class="mat-caption text">Save the recording to your computer</div>
+      </div>
+    </div>
+    <div class="big-button" draggable="true" (dragstart)="handleDragStart($event)">
+      <div class="main">
+        <div class="preview-container">
+          <app-export-preview [export]="{ path: tempOutputPath, type: outputType.type }"></app-export-preview>
+          <div class="drag-indicator">
+            <i class="fa fa-fw fa-hand-rock"></i>
+          </div>
+        </div>
+        <div class="title">Drag the {{ outputType?.name }}</div>
+        <div class="mat-caption text">Share the recording by dragging it to other apps</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cancel</button>
+</div>

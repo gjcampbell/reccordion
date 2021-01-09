@@ -55,6 +55,24 @@ export class ConverterService implements IFrameExtractor {
     return framePath;
   }
 
+  public estimateWebmRenderTime(width: number, height: number, durationMs: number) {
+    const sec = durationMs / 1000,
+      area = width * height,
+      areaSeconds = area * sec,
+      areaPerSec = 345600,
+      expectedSec = areaSeconds / areaPerSec;
+    return expectedSec * 1000;
+  }
+
+  public estimateGifRenderTime(width: number, height: number, durationMs: number, fastGif: boolean) {
+    const sec = durationMs / 1000,
+      area = width * height,
+      areaSeconds = area * sec,
+      areaPerSec = fastGif ? 115200 : 34560,
+      expectedSec = areaSeconds / areaPerSec;
+    return expectedSec * 1000;
+  }
+
   /**
    * GIF.JS creates flickery gifs
    */
@@ -110,17 +128,19 @@ export class ConverterService implements IFrameExtractor {
   }
 
   public async convertEnumerableCtxToFrames(frames: AsyncIterableIterator<CanvasRenderingContext2D>) {
-    const framesDir = this.electron.tempDirPath();
+    const framesDir = this.electron.tempDirPath(),
+      framePaths: string[] = [];
     await this.electron.mkDir(framesDir);
     let i = 0;
     for await (const frame of frames) {
       const path = this.electron.pathJoin(framesDir, `frame-${i.toString().padStart(5, '0')}.png`),
         imgBlob = await this.getFrame(frame);
 
+      framePaths.push(path);
       this.electron.saveBlob(imgBlob, path);
       i++;
     }
-    return framesDir;
+    return { framesDir, framePaths };
   }
 
   public async convertFramesToGif(

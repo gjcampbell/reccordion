@@ -87,8 +87,8 @@ try {
   // throw e;
 }
 
-ipcMain.on('ondragstart', (evt: IpcMainEvent, path: string) => {
-  evt.sender.startDrag({ file: path, icon: images.accordionDrag });
+ipcMain.on('ondragstart', (evt: IpcMainEvent, path: string, icon: string) => {
+  evt.sender.startDrag({ file: path, icon });
 });
 
 const images = {
