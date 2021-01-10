@@ -100,8 +100,21 @@ export class ElectronService {
     });
   }
 
-  public async httpGet(url: string) {
-    return await this.ipcRenderer.invoke('http', JSON.stringify({ url, method: 'GET' }));
+  public async httpGet<T>(url: string) {
+    const u = new URL(url),
+      options = {
+        hostname: u.hostname,
+        path: u.pathname,
+        protocol: u.protocol,
+        method: 'GET',
+        headers: { 'user-agent': 'node.js' },
+      },
+      response = await this.ipcRenderer.invoke('http', JSON.stringify(options));
+    return JSON.parse(response) as T;
+  }
+
+  public openInBrowser(url: string) {
+    this.remote.shell.openExternal(url);
   }
 
   public async cmd(cmd: string, args: string[], cwd: string = undefined): Promise<boolean> {

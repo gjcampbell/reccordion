@@ -1,11 +1,12 @@
 const path = require('path'),
   url = require('url'),
-  customTitlebar = require('custom-electron-titlebar');
+  customTitlebar = require('custom-electron-titlebar'),
+  Menu = require('electron').remote.Menu;
 
 window.addEventListener('DOMContentLoaded', () => {
-  new customTitlebar.Titlebar({
+  const titlebar = new customTitlebar.Titlebar({
     backgroundColor: customTitlebar.Color.fromHex('#101010'),
-    menu: null
+    menu: new Menu()
   });
 
 
@@ -16,5 +17,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   for (const type of ['chrome', 'node', 'electron']) {
     replaceText(`${type}-version`, process.versions[type])
+  }
+  
+  if (window.onTitlebarReady) {
+	window.onTitlebarReady(titlebar);
   }
 })

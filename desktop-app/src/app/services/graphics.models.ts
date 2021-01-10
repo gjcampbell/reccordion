@@ -193,10 +193,10 @@ export class CommentLayer implements IVideoLayer {
     canvasTxt.drawText(
       ctx,
       comment.text,
-      comment.position.x + comment.padding,
-      comment.position.y + comment.padding,
-      Math.max(comment.width - comment.padding * 2, 50),
-      Math.max(comment.height - comment.padding * 2, 50)
+      comment.position.x,
+      comment.position.y,
+      Math.max(comment.width, 50),
+      Math.max(comment.height, 50)
     );
   }
 

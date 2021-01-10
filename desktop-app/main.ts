@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, nativeImage, IpcMainInvokeEvent } from 'electron';
 import { IpcMainEvent } from 'electron/main';
 import { spawn, spawnSync } from 'child_process';
+import * as https from 'https';
 import * as path from 'path';
 import * as url from 'url';
 
@@ -106,5 +107,15 @@ ipcMain.handle('cmd', (evt: IpcMainInvokeEvent, cmdJson: string) => {
 });
 
 ipcMain.handle('http', (evt: IpcMainInvokeEvent, argsJson: string) => {
-  const { url, method } = JSON.parse(argsJson);
+  const request = JSON.parse(argsJson);
+  return new Promise<string>((resolve) => {
+    const req = https.request(request, (response) => {
+      let result = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => (result += chunk));
+      response.on('end', () => resolve(result));
+    });
+    req.on('error', (e) => console.error(e));
+    req.end();
+  });
 });

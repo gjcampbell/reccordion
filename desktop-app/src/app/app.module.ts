@@ -17,6 +17,7 @@ import { FastNgUpdateService } from './services/fast-ng-update.service';
 import { RecordingService } from './services/recording.service';
 import { RendererService, ReqRendererService } from './services/renderer.service';
 import { ShapeService } from './services/shape.service';
+import { UpdateService } from './services/update.service';
 
 import { AppComponent } from './app.component';
 import { CanvasTextEditorComponent } from './components/canvas-text-editor/canvas-text-editor.component';
@@ -99,6 +100,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     ReqRendererService,
     RendererService,
     ShapeService,
+    UpdateService,
   ],
   bootstrap: [AppComponent],
 })
