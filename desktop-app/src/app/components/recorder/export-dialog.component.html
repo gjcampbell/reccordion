@@ -1,16 +1,16 @@
 <div mat-dialog-content class="export-body">
   <div *ngIf="!processing && !done" class="type-picker">
     <div class="big-button">
-      <div class="main" (click)="exportGif(false)">
+      <div class="main" (click)="exportGif(true)">
         <div class="icon icon-gif"></div>
         <div class="mat-caption text">
           Lower quality, takes a while to generate, supported by most tools, recommended for
           <strong>Outlook, Teams, Azure Devops</strong>
         </div>
       </div>
-      <div (click)="exportGif(true)">
-        <div class="title">Quicker GIF</div>
-        <div class="mat-caption text">Slightly lower quality, but much faster to generate</div>
+      <div (click)="exportGif(false)">
+        <div class="title">Slightly Higher Quality GIF</div>
+        <div class="mat-caption text">Slightly higher quality GIF, takes three times longer than a regular GIF</div>
       </div>
     </div>
     <div class="big-button" (click)="exportWebm()">
@@ -31,10 +31,14 @@
       [class.done]="step.done"
     >
       <div class="step-label">{{ i + 1 + '. ' + step.step }}</div>
-      <div class="step-status">{{ getStepStatus(step) }}</div>
-      <ng-container *ngIf="step.started && step.estimatedWait">
+      <div class="step-status">
+        {{ getStepStatus(step) }}
+      </div>
+      <div class="progress" *ngIf="step.started && step.estimatedWait">
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      </ng-container>
+        <div>Estimated Wait: {{ step.estimatedWait }}</div>
+        <div class="mat-caption">{{ step.startTime ? 'Started: ' + step.startTime : '' }}</div>
+      </div>
     </div>
   </div>
   <div *ngIf="done" class="ready">

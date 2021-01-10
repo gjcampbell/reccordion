@@ -3,7 +3,7 @@ import { Pt, diffPt, dividePt, ShapePoint } from 'app/services/graphics.models';
 
 @Injectable()
 export class ResizerService {
-  private minSize = 50;
+  private minSize = 1;
 
   public resize(dir: string, model: IResizeable, origEvt: MouseEvent, bounds: { width: number; height: number }) {
     if (dir in this) {

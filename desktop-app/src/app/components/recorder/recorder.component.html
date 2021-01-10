@@ -40,7 +40,12 @@
       </button>
       <div class="sep"></div>
     </ng-container>
-    <button matTooltip="Clear Everything and Start Over" matTooltipPosition="right" mat-icon-button (click)="clear()">
+    <button
+      matTooltip="Clear Everything and Start Over"
+      matTooltipPosition="right"
+      mat-icon-button
+      (click)="tryClear()"
+    >
       <i class="fa fa-fw fa-trash"></i>
     </button>
   </div>
@@ -51,6 +56,8 @@
     [layers]="layers"
     [video]="videoLayer"
     [fps]="25"
+    [(width)]="width"
+    [(height)]="height"
     #player
     [style.display]="isEmpty ? 'none' : undefined"
   ></app-player>
@@ -74,6 +81,18 @@
         <i class="fa fa-play-circle"></i>
         Done
       </div>
+    </div>
+  </div>
+</app-big-overlay>
+<app-big-overlay *ngIf="confirmClear">
+  <div class="big-overlay">
+    <div class="mat-headline big-button" (click)="clear()">
+      <i class="fa fa-check"></i>
+      Yes, really clear everything and Start Over
+    </div>
+    <div class="mat-headline big-button" (click)="cancelClear()">
+      <i class="fa fa-hand-paper"></i>
+      Nevermind
     </div>
   </div>
 </app-big-overlay>

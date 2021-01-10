@@ -7,13 +7,15 @@
   transition: 0.2s;
   display: flex;
   flex-direction: column;
-  max-width: 300px;
-  align-items: center;
   &:last-child {
     border-left: dashed;
   }
   > div {
     padding: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
   > div:hover {
     background: #fdf2ff40;
@@ -45,6 +47,9 @@
   &[draggable] {
     cursor: grab;
   }
+  strong {
+    color: $darkteal;
+  }
 }
 
 .type-picker {
@@ -69,32 +74,46 @@
   padding: 1rem 0;
   border-bottom: solid 1px;
   display: grid;
+  grid-template-columns: 1fr min-content;
   &.started {
     opacity: 1;
+    grid-template-columns: 1fr min-content;
   }
   &.done {
     opacity: 0.5;
   }
-  grid-template-columns: 1fr min-content;
-  .mat-progress-bar {
+  .progress {
     grid-column: span 2;
+  }
+  mat-progress-bar {
+    width: 94%;
+    margin: 0.5rem 3%;
   }
 }
 
+.big-button > div:hover .drag-indicator {
+  visibility: visible;
+}
 .preview-container {
   position: relative;
+  padding: 0 1rem;
   .drag-indicator {
     background: #393939a0;
     position: absolute;
-    width: 100%;
+    width: calc(100% - 2rem);
     height: 100%;
     display: flex;
     top: 0;
+    left: 1rem;
     align-items: center;
     justify-content: center;
     visibility: hidden;
-    &:hover {
-      visibility: visible;
-    }
+  }
+  i {
+    border: dashed 2px #fff;
+    border-radius: 50px;
+    height: 67px;
+    width: 67px;
+    line-height: 67px;
   }
 }

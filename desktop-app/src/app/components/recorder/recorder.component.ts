@@ -1,14 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  Inject,
-  ViewChild,
-  OnDestroy,
-  ChangeDetectorRef,
-  ChangeDetectionStrategy,
-  Input,
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, ViewChild, OnDestroy, Input } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ConverterService } from 'app/services/converter.service';
 import { ElectronService } from 'app/services/electron.service';
@@ -36,6 +26,7 @@ import {
   ShapeService,
 } from 'app/services/shape.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { formatDistance, addMilliseconds, format } from 'date-fns';
 
 @Component({
   selector: 'app-recorder',
@@ -53,6 +44,9 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
   public exporting = false;
   public fps = 25;
   public processing = false;
+  public confirmClear = false;
+  public width = 720;
+  public height = 480;
   public get isRecording() {
     return !!this.capturer;
   }
@@ -211,8 +205,8 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
     const dialogRef = this.dialog.open(ExportDialog, {
       data: {
         quality: 0.99999,
-        width: this.player.width,
-        height: this.player.height,
+        width: this.width,
+        height: this.height,
         frameRate: 25,
         durationMs: this.videoLayer.getDurationMs(),
         layers: [this.videoLayer, this.textLayer],
@@ -257,7 +251,15 @@ export class RecorderComponent implements AfterViewInit, OnDestroy {
   }
 
   public clear() {
+    this.confirmClear = false;
     window.history.go(0);
+  }
+  public cancelClear() {
+    this.confirmClear = false;
+  }
+
+  public tryClear() {
+    this.confirmClear = true;
   }
 
   public async stop() {
@@ -331,6 +333,7 @@ interface IProcessingStep {
   step: string;
   percent: number;
   estimatedWait?: string;
+  startTime?: string;
   started?: boolean;
   done?: boolean;
 }
@@ -408,7 +411,7 @@ export class ExportDialog implements AfterViewInit {
       : step.done
       ? 'Done'
       : step.estimatedWait
-      ? step.estimatedWait
+      ? 'Running'
       : this.getPercent(step.percent);
   }
 
@@ -428,44 +431,54 @@ export class ExportDialog implements AfterViewInit {
 
   public async exportGif(fast: boolean) {
     const [renderStep, convertStep] = this.startProcessing([
-      { step: 'Rendering Frames', percent: 0, started: true },
-      { step: 'Converting to GIF', percent: 0, estimatedWait: '' },
-    ]);
+        { step: 'Rendering Frames', percent: 0, started: true },
+        { step: 'Converting to GIF', percent: 0, estimatedWait: '' },
+      ]),
+      { width, height, durationMs, frameRate } = this.video,
+      estimatedMs = this.converter.estimateGifRenderTime(width, height, durationMs, fast);
+
     this.outputType = { name: 'GIF', ext: 'gif', type: 'image/gif' };
     const { framesDir, framePaths } = await this.createFrames(renderStep);
 
     renderStep.done = true;
-    convertStep.started = true;
+    this.startStep(convertStep, estimatedMs);
 
     this.tempOutputPath = this.electron.tempFilePath('gif');
     this.firstFramePath = framePaths[0];
-    await this.converter.convertFramesToGif(
-      framesDir,
-      this.video.frameRate || 25,
-      this.tempOutputPath,
-      this.video.width,
-      fast
-    );
+    await this.converter.convertFramesToGif(framesDir, frameRate || 25, this.tempOutputPath, width, fast);
     this.processing = false;
     this.done = true;
   }
 
   public async exportWebm() {
     const [renderStep, convertStep] = this.startProcessing([
-      { step: 'Rendering Frames', percent: 0, started: true },
-      { step: 'Converting to WebM', percent: 0, estimatedWait: '' },
-    ]);
+        { step: 'Rendering Frames', percent: 0, started: true },
+        { step: 'Converting to WebM', percent: 0, estimatedWait: '' },
+      ]),
+      { width, height, durationMs } = this.video,
+      estimatedMs = this.converter.estimateWebmRenderTime(width, height, durationMs);
     this.outputType = { name: 'WebM', ext: 'webm', type: 'video/webm' };
     const { framesDir, framePaths } = await await this.createFrames(renderStep);
 
     this.tempOutputPath = this.electron.tempFilePath('webm');
     this.firstFramePath = framePaths[0];
     renderStep.done = true;
-    convertStep.started = true;
+    this.startStep(convertStep, estimatedMs);
 
-    await this.converter.convertFramesToWebm(framesDir, this.tempOutputPath, this.video.width);
+    await this.converter.convertFramesToWebm(framesDir, this.tempOutputPath, width);
     this.processing = false;
     this.done = true;
+  }
+
+  private startStep(step: IProcessingStep, estimatedMs: number) {
+    step.started = true;
+    step.startTime = format(new Date(), 'eeee h:mma');
+    step.estimatedWait = this.getExpectedTime(estimatedMs);
+  }
+
+  private getExpectedTime(mills: number) {
+    const endTime = addMilliseconds(new Date(), mills);
+    return formatDistance(endTime, new Date(), { includeSeconds: true });
   }
 
   private async exportWithGifJs() {

@@ -8,8 +8,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 } from 'uuid';
-import { threadId } from 'worker_threads';
-import { StdioOptions } from 'child_process';
 
 @Injectable({
   providedIn: 'root',
@@ -102,14 +100,19 @@ export class ElectronService {
     });
   }
 
-  public cmd(cmd: string, args: string[], cwd: string = undefined): Promise<boolean> {
-    return new Promise<boolean>(async (resolve, reject) => {
-      this.childProcess.spawnSync(cmd, args, {
-        windowsVerbatimArguments: true,
-        cwd,
-      });
-      resolve(true);
-    });
+  public async httpGet(url: string) {
+    return await this.ipcRenderer.invoke('http', JSON.stringify({ url, method: 'GET' }));
+  }
+
+  public async cmd(cmd: string, args: string[], cwd: string = undefined): Promise<boolean> {
+    return await this.ipcRenderer.invoke('cmd', JSON.stringify({ cmd, args, cwd }));
+    // return new Promise<boolean>(async (resolve, reject) => {
+    //   const child = this.childProcess.spawnSync(cmd, args, {
+    //     windowsVerbatimArguments: true,
+    //     cwd,
+    //   });
+    //   resolve(true);
+    // });
   }
 
   public cmdTryingToReadStdoutProgress(

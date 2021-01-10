@@ -88,8 +88,14 @@ import { PlayerCanvasModel } from './player-canvas.model';
 export class PlayerComponent implements AfterViewInit {
   private _currentTime = 0;
   private currentSource: MediaStream | Blob;
-  public width = 720;
-  public height = 480;
+  @Input()
+  public width: number;
+  @Output()
+  public widthChange = new EventEmitter<number>();
+  @Input()
+  public height: number;
+  @Output()
+  public heightChange = new EventEmitter<number>();
   public liveTime = '';
 
   @ViewChild('time')
@@ -181,6 +187,8 @@ export class PlayerComponent implements AfterViewInit {
   }
   public handleDimChange() {
     this.video.setDimensions(this.width, this.height);
+    this.widthChange.emit(this.width);
+    this.heightChange.emit(this.height);
   }
   public handleMetadataLoaded() {
     if (this.videoEl) {
