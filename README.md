@@ -1,10 +1,8 @@
-# Reccordion - Screen Recorder
+#  🎞️ Reccordion - Screen Recorder
 
 For when screenshots need to animate. 
 
-
-
-## Contribution
+## ✍️ Contribution
 
 There's a lot of room for improvement! Add a feature or fix a bug, and submit a PR. Here are some ideas:
 - Improve shapes. Add more shapes, add point translation, rotation, text rotation, 
@@ -14,7 +12,7 @@ There's a lot of room for improvement! Add a feature or fix a bug, and submit a 
 - Support Mac and Linux
 - Clean up the code. There is a ton of slop, trial and error, and experimentation muddying the code base.
 
-## Credit
+## 🙏 Credit
 
 These fantastic libraries do a lot of the heavy lifting
 
