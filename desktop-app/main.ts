@@ -102,6 +102,7 @@ ipcMain.handle('cmd', (evt: IpcMainInvokeEvent, cmdJson: string) => {
       });
     console.log('starting cmd', cmd, args, cwd);
     child.on('close', () => resolve());
+    child.on('error', () => resolve());
     child.on('exit', () => resolve());
   });
 });
