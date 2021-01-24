@@ -39,8 +39,9 @@ export class PlayerCanvasModel {
     const snappedMs = this.snapMsToFrame(timeMs),
       frameCt = snappedMs / this.frameDurMs,
       frame = (frameCt % this.fps) + 1,
-      second = Math.floor(frameCt / this.fps) % 60,
-      minute = Math.floor(second / 60);
+      totalSeconds = Math.floor(frameCt / this.fps),
+      second = totalSeconds % 60,
+      minute = Math.floor(totalSeconds / 60);
 
     return { minute, second, frame };
   }

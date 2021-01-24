@@ -89,6 +89,15 @@ try {
   // throw e;
 }
 
+const isRunning = (pid: number) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 ipcMain.on('ondragstart', (evt: IpcMainEvent, path: string, icon: string) => {
   evt.sender.startDrag({ file: path, icon });
 });
@@ -99,7 +108,13 @@ ipcMain.handle('cmd', (evt: IpcMainInvokeEvent, cmdJson: string) => {
       child = spawn(cmd, args, {
         windowsVerbatimArguments: true,
         cwd,
-      });
+      }),
+      isAliveInterval = setInterval(() => {
+        if (!isRunning(child.pid)) {
+          resolve();
+          clearInterval(isAliveInterval);
+        }
+      }, 250);
     console.log('starting cmd', cmd, args, cwd);
     child.on('close', () => resolve());
     child.on('error', () => resolve());

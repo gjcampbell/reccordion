@@ -16,7 +16,7 @@ declare var MediaRecorder: {
 };
 
 const kbps = 1024,
-  mbps = kbps * kbps;
+  mbps = kbps * kbps * 8;
 
 @Injectable()
 export class RecordingService {
@@ -52,7 +52,7 @@ export class RecordingService {
         } as any,
       }),
       videoRecorder = new MediaRecorder(videoStream, {
-        mimeType: 'video/webm;codecs="vp9"',
+        mimeType: 'video/webm;codecs="vp8"',
         videoBitsPerSecond: 4 * mbps,
       });
 

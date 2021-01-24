@@ -9,7 +9,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
       <div class="label">How long should the video be?</div>
       <div class="duration-input">
         <input type="number" [(ngModel)]="minutes" min="0" />:
-        <input type="number" [(ngModel)]="seconds" min="0" step=".1" />
+        <input type="number" [(ngModel)]="seconds" min="0" step=".04" />
       </div>
       <div class="label">(minutes:seconds)</div>
     </div>

@@ -169,10 +169,10 @@ export class ConverterService implements IFrameExtractor {
       args = [
         '-i',
         `"${webmPath}"`,
-        `-r ${fps}`,
         '-vsync vfr',
         '-qscale:v 5',
         '-compression_level 6',
+        '-vf fps=25',
         `"${dir}\\f%05d.jpg"`,
       ];
 
