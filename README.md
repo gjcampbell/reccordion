@@ -2,6 +2,8 @@
 
 For when screenshots need to animate. 
 
+Check out the [demo video](https://oofficestorage.z19.web.core.windows.net/reccordion-demo.webm)
+
 ## ✍️ Contribution
 
 There's a lot of room for improvement! Add a feature or fix a bug, and submit a PR. Here are some ideas:
